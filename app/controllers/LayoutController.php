@@ -185,10 +185,10 @@ class LayoutController {
 
         if($id) {
             $this->villeModel->update($id, $nom, $region);
-            Flight::redirect('/villes?msg=updated');
+            Flight::redirect(Flight::get('flight.base_url') . 'villes?msg=updated');
         } else {
             $this->villeModel->create($nom, $region);
-            Flight::redirect('/villes?msg=created');
+            Flight::redirect(Flight::get('flight.base_url') . 'villes?msg=created');
         }
     }
 
@@ -203,10 +203,10 @@ class LayoutController {
 
         if($id) {
             $this->besoinModel->update($id, $idVille, $type, $designation, $prixUnitaire, $quantite, $dateSaisie);
-            Flight::redirect('/besoins?msg=updated');
+            Flight::redirect(Flight::get('flight.base_url') . 'besoins?msg=updated');
         } else {
             $this->besoinModel->create($idVille, $type, $designation, $prixUnitaire, $quantite, $dateSaisie);
-            Flight::redirect('/besoins?msg=created');
+            Flight::redirect(Flight::get('flight.base_url') . 'besoins?msg=created');
         }
     }
 
@@ -233,9 +233,9 @@ class LayoutController {
             $resultat = $this->distributionService->redistribuerDon($id);
             
             if ($resultat['success']) {
-                Flight::redirect('/dons?msg=updated&distributed=1');
+                Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=updated&distributed=1');
             } else {
-                Flight::redirect('/dons?msg=error');
+                Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=error');
             }
         } else {
             // Créer un nouveau don (sans idVille, sera spécifiée lors de l'attribution)
@@ -246,12 +246,12 @@ class LayoutController {
                 $resultat = $this->distributionService->distribuerDon($lastDonId);
                 
                 if ($resultat['success']) {
-                    Flight::redirect('/dons?msg=created&distributed=1');
+                    Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=created&distributed=1');
                 } else {
-                    Flight::redirect('/dons?msg=created');
+                    Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=created');
                 }
             } else {
-                Flight::redirect('/dons?msg=error');
+                Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=error');
             }
         }
     }
@@ -261,17 +261,17 @@ class LayoutController {
      */
     public function deleteVille($id) {
         $this->villeModel->delete($id);
-        Flight::redirect('/villes?msg=deleted');
+        Flight::redirect(Flight::get('flight.base_url') . 'villes?msg=deleted');
     }
 
     public function deleteBesoin($id) {
         $this->besoinModel->delete($id);
-        Flight::redirect('/besoins?msg=deleted');
+        Flight::redirect(Flight::get('flight.base_url') . 'besoins?msg=deleted');
     }
 
     public function deleteDon($id) {
         $this->donModel->delete($id);
-        Flight::redirect('/dons?msg=deleted');
+        Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=deleted');
     }
 
     /**
@@ -326,10 +326,10 @@ class LayoutController {
 
         if($id) {
             $this->attributionModel->update($id, $idDons, $idVille, $designation, $quantiteAttribuee, $dateAttribution);
-            Flight::redirect('/attributions?msg=updated');
+            Flight::redirect(Flight::get('flight.base_url') . 'attributions?msg=updated');
         } else {
             $this->attributionModel->create($idDons, $idVille, $designation, $quantiteAttribuee, $dateAttribution);
-            Flight::redirect('/attributions?msg=created');
+            Flight::redirect(Flight::get('flight.base_url') . 'attributions?msg=created');
         }
     }
 
@@ -338,7 +338,7 @@ class LayoutController {
      */
     public function deleteAttribution($id) {
         $this->attributionModel->delete($id);
-        Flight::redirect('/attributions?msg=deleted');
+        Flight::redirect(Flight::get('flight.base_url') . 'attributions?msg=deleted');
     }
 
     /**
@@ -367,9 +367,9 @@ class LayoutController {
         $resultat = $this->distributionService->redistribuerDon($idDon);
         
         if ($resultat['success']) {
-            Flight::redirect('/dons/' . $idDon . '/rapport?msg=redistributed');
+            Flight::redirect(Flight::get('flight.base_url') . 'dons/' . $idDon . '/rapport?msg=redistributed');
         } else {
-            Flight::redirect('/dons/' . $idDon . '/rapport?msg=error');
+            Flight::redirect(Flight::get('flight.base_url') . 'dons/' . $idDon . '/rapport?msg=error');
         }
     }
     public function recap() {
@@ -608,9 +608,9 @@ class LayoutController {
         $resultat = $this->distributionService->redistribuerTousDonsArgent();
         
         if ($resultat['success']) {
-            Flight::redirect('/stock-argent?msg=redistributed');
+            Flight::redirect(Flight::get('flight.base_url') . 'stock-argent?msg=redistributed');
         } else {
-            Flight::redirect('/stock-argent?msg=error&detail=' . urlencode($resultat['message']));
+            Flight::redirect(Flight::get('flight.base_url') . 'stock-argent?msg=error&detail=' . urlencode($resultat['message']));
         }
     }
 

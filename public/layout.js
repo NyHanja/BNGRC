@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
         logoutBtn.addEventListener('click', function(e) {
             if(confirm('Êtes-vous sûr de vouloir vous déconnecter?')) {
                 // Rediriger vers la route de déconnexion
-                window.location.href = '/logout';
+                window.location.href = (window.BASE_URL || '/') + 'logout';
             }
         });
     }

@@ -79,4 +79,4 @@ $nonce = Flight::get('csp_nonce');
     </div>
 </div>
 
-<script src="/simulation.js" nonce="<?=$nonce?>"></script>
+<script src="<?php echo Flight::get('flight.base_url'); ?>simulation.js" nonce="<?=$nonce?>"></script>

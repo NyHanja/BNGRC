@@ -52,7 +52,7 @@ $historique = $historique ?? [];
 
     <!-- Lien de retour -->
     <div style="margin-top: 2rem;">
-        <a href="/stock-argent" class="btn btn-primary" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px;">
+        <a href="<?php echo Flight::get('flight.base_url'); ?>stock-argent" class="btn btn-primary" style="display: inline-block; padding: 0.75rem 1.5rem; background-color: #3498db; color: white; text-decoration: none; border-radius: 4px;">
             ← Retour aux Stocks
         </a>
     </div>

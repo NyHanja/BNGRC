@@ -5,7 +5,7 @@ $nonce = Flight::get('csp_nonce');
 <div class="page-section">
     <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h2>💰 Suivi du Stock d'Argent par Ville</h2>
-        <form method="POST" action="/stock-argent/redistribuer-tout" style="display:inline;">
+        <form method="POST" action="<?php echo Flight::get('flight.base_url'); ?>stock-argent/redistribuer-tout" style="display:inline;">
             <button type="submit" class="btn btn-primary" onclick="return confirm('Recalculer et redistribuer tous les dons d\'argent ?')">
                 🔄 Redistribuer tous les dons d'argent
             </button>
@@ -31,7 +31,7 @@ $nonce = Flight::get('csp_nonce');
                     </span>
                 </td>
                 <td class="text-center">
-                    <a href="/stock-argent/<?php echo $stock['idVille']; ?>/details" class="btn btn-sm btn-info">
+                    <a href="<?php echo Flight::get('flight.base_url'); ?>stock-argent/<?php echo $stock['idVille']; ?>/details" class="btn btn-sm btn-info">
                         👁️ Détails
                     </a>
                 </td>

@@ -5,11 +5,12 @@ $nonce = Flight::get('csp_nonce');
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+    <script nonce="<?=$nonce?>">window.BASE_URL = '<?php echo Flight::get('flight.base_url'); ?>';</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($pageTitle) ? $pageTitle : 'BNGRC - Gestion des Dons'; ?></title>
-    <link rel="stylesheet" href="/styles.css">
-    <link rel="stylesheet" href="/layout.css">
+    <link rel="stylesheet" href="<?php echo Flight::get('flight.base_url'); ?>styles.css">
+    <link rel="stylesheet" href="<?php echo Flight::get('flight.base_url'); ?>layout.css">
 </head>
 <body>
     <div class="app-container">
@@ -21,14 +22,14 @@ $nonce = Flight::get('csp_nonce');
                     <p>Gestion des Dons</p>
                 </div>
                 <nav class="header-nav">
-                    <a href="/">Accueil</a>
-                    <a href="/villes">Villes</a>
-                    <a href="/besoins">Besoins</a>
-                    <a href="/dons">Dons</a>
-                    <a href="/attributions">Attributions</a>
-                    <a href="/stock-argent">Stock Argent</a>
-                    <a href="/recap">Récapitulatif</a>
-                    <a href="/simulation">Simulation</a>
+                    <a href="<?php echo Flight::get('flight.base_url'); ?>">Accueil</a>
+                    <a href="<?php echo Flight::get('flight.base_url'); ?>villes">Villes</a>
+                    <a href="<?php echo Flight::get('flight.base_url'); ?>besoins">Besoins</a>
+                    <a href="<?php echo Flight::get('flight.base_url'); ?>dons">Dons</a>
+                    <a href="<?php echo Flight::get('flight.base_url'); ?>attributions">Attributions</a>
+                    <a href="<?php echo Flight::get('flight.base_url'); ?>stock-argent">Stock Argent</a>
+                    <a href="<?php echo Flight::get('flight.base_url'); ?>recap">Récapitulatif</a>
+                    <a href="<?php echo Flight::get('flight.base_url'); ?>simulation">Simulation</a>
                 </nav>
                 <div class="user-menu">
                     <span class="user-name">Bienvenue</span>
@@ -44,31 +45,31 @@ $nonce = Flight::get('csp_nonce');
                     <div class="menu-section">
                         <h3>Navigation</h3>
                         <ul>
-                            <li><a href="/" class="menu-item">📊 Tableau de bord</a></li>
-                            <li><a href="/villes" class="menu-item">🏘️ Villes</a></li>
-                            <li><a href="/besoins" class="menu-item">📋 Besoins</a></li>
-                            <li><a href="/dons" class="menu-item">🎁 Dons</a></li>
-                            <li><a href="/attributions" class="menu-item">📦 Attributions</a></li>
-                            <li><a href="/stock-argent" class="menu-item">💰 Stock Argent</a></li>
-                            <li><a href="/recap" class="menu-item">📊 Récapitulatif</a></li>
-                            <li><a href="/simulation" class="menu-item">🧪 Simulation</a></li>
+                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>" class="menu-item">📊 Tableau de bord</a></li>
+                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>villes" class="menu-item">🏘️ Villes</a></li>
+                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>besoins" class="menu-item">📋 Besoins</a></li>
+                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>dons" class="menu-item">🎁 Dons</a></li>
+                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>attributions" class="menu-item">📦 Attributions</a></li>
+                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>stock-argent" class="menu-item">💰 Stock Argent</a></li>
+                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>recap" class="menu-item">📊 Récapitulatif</a></li>
+                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>simulation" class="menu-item">🧪 Simulation</a></li>
                         </ul>
                     </div>
                     
                     <div class="menu-section">
                         <h3>Gestion</h3>
                         <ul>
-                            <li><a href="/villes/create" class="menu-item">➕ Ajouter ville</a></li>
-                            <li><a href="/besoins/create" class="menu-item">➕ Ajouter besoin</a></li>
+                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>villes/create" class="menu-item">➕ Ajouter ville</a></li>
+                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>besoins/create" class="menu-item">➕ Ajouter besoin</a></li>
 
-                            <li><a href="/dons/create" class="menu-item">➕ Ajouter don</a></li>
+                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>dons/create" class="menu-item">➕ Ajouter don</a></li>
                         </ul>
                     </div>
 
                     <div class="menu-section">
                         <h3>Rapports</h3>
                         <ul>
-                            <li><a href="/rapports" class="menu-item">📈 Statistiques</a></li>
+                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>rapports" class="menu-item">📈 Statistiques</a></li>
                         </ul>
                     </div>
                 </div>
@@ -115,6 +116,6 @@ $nonce = Flight::get('csp_nonce');
         </footer>
     </div>
 
-    <script src="/layout.js" nonce="<?= $nonce ?>"></script>
+    <script src="<?php echo Flight::get('flight.base_url'); ?>layout.js" nonce="<?= $nonce ?>"></script>
 </body>
 </html>
