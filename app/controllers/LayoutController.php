@@ -21,17 +21,14 @@ class LayoutController {
      * Fonction générique pour afficher une page avec layout
      */
     public function render($view, $data = []) {
-        // Passer les données à la vue
-        foreach($data as $key => $value) {
-            Flight::set($key, $value);
-        }
+        // Extraire les données pour qu'elles soient disponibles dans la vue
+        extract($data);
 
         // Définir le chemin de la vue
         $viewPath = __DIR__ . '/../views/' . $view . '.php';
         
         // Passer les informations au layout
-        Flight::set('view', $viewPath);
-        Flight::set('pageTitle', isset($data['pageTitle']) ? $data['pageTitle'] : 'BNGRC');
+        $pageTitle = isset($data['pageTitle']) ? $data['pageTitle'] : 'BNGRC';
 
         // Afficher le layout
         include __DIR__ . '/../views/layout.php';
