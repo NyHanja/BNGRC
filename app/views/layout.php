@@ -65,9 +65,9 @@
             <main class="main-content">
                 <div class="content-wrapper">
                     <?php 
-                    // Inclusão do contenu dynamique
-                    if(isset($view) && file_exists($view)) {
-                        include $view;
+                    // Inclusion du contenu dynamique
+                    if(isset($viewPath) && file_exists($viewPath)) {
+                        include $viewPath;
                     } else {
                         echo '<div class="alert alert-warning">Contenu non disponible</div>';
                     }
