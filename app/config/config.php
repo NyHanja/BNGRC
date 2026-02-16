@@ -67,8 +67,8 @@ return [
 	 **************************************/
 	'database' => [
 		// MySQL Example:
-		'host'     => 'localhost', 
-		'dbname'   => 'flight',
+		'host'     => '127.0.0.1', 
+		'dbname'   => 'bngrc',
 		'user'     => 'root',  
 		'password' => '',
 
