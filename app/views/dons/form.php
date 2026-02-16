@@ -29,10 +29,10 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label for="montantUnitaire">Montant Unitaire (Ar):</label>
+                <label for="montantUnitaire" id="labelMontant">Montant Unitaire (Ar):</label>
                 <input type="number" id="montantUnitaire" name="montantUnitaire" class="form-control" step="0.01" value="<?php echo isset($don) ? $don['montantUnitaire'] : ''; ?>" required>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="groupQuantite">
                 <label for="quantite">Quantité:</label>
                 <input type="number" id="quantite" name="quantite" class="form-control" value="<?php echo isset($don) ? $don['quantite'] : ''; ?>" required>
             </div>
@@ -44,3 +44,26 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.getElementById('type');
+    const groupQuantite = document.getElementById('groupQuantite');
+    const quantiteInput = document.getElementById('quantite');
+    const labelMontant = document.getElementById('labelMontant');
+
+    function toggleQuantite() {
+        if (typeSelect.value === 'argent') {
+            groupQuantite.style.display = 'none';
+            quantiteInput.value = 1;
+            labelMontant.textContent = 'Montant Total (Ar):';
+        } else {
+            groupQuantite.style.display = '';
+            labelMontant.textContent = 'Montant Unitaire (Ar):';
+        }
+    }
+
+    typeSelect.addEventListener('change', toggleQuantite);
+    toggleQuantite();
+});
+</script>

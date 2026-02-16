@@ -64,7 +64,15 @@ function simulerDistribution() {
             if (data.success) {
                 dernierSimulation = data;
                 afficherResultats(data);
-                document.getElementById('btnValider').disabled = false;
+                // Désactiver le bouton valider si stock insuffisant
+                const btnValider = document.getElementById('btnValider');
+                if (!data.simulation.stockSuffisant) {
+                    btnValider.disabled = true;
+                    btnValider.title = 'Stock d\'argent insuffisant pour cette ville';
+                } else {
+                    btnValider.disabled = false;
+                    btnValider.title = '';
+                }
             } else {
                 afficherErreur(data.message || 'Erreur lors de la simulation');
             }
@@ -92,7 +100,6 @@ function validerDistribution() {
     formData.append('besoinId', document.getElementById('besoinSelect').value);
     formData.append('quantite', dernierSimulation.simulation.quantiteAAttribuer);
     formData.append('montantNet', dernierSimulation.simulation.montantNet);
-    formData.append('idVilleDestinaire', dernierSimulation.besoin.nomVille);
 
     fetch('/api/simulation/valider', {
         method: 'POST',
@@ -149,6 +156,12 @@ function afficherResultats(data) {
 
             <div class="resultat-section calculs">
                 <h3>💰 Calculs</h3>
+                <div class="calcul-row" style="background: ${sim.stockSuffisant ? '#eafaf1' : '#fdedec'}; padding: 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">
+                    <span class="calcul-label">💰 Stock argent de ${echapperHTML(sim.villeNom || besoin.nomVille)}:</span>
+                    <span class="calcul-value" style="color: ${sim.stockSuffisant ? '#27ae60' : '#e74c3c'}; font-weight: bold;">
+                        ${formatMontant(sim.stockDisponible)} ${sim.stockSuffisant ? '✅ Suffisant' : '❌ Insuffisant'}
+                    </span>
+                </div>
                 <div class="calcul-row">
                     <span class="calcul-label">Quantité demandée:</span>
                     <span class="calcul-value">${sim.quantiteVoulue}</span>
@@ -197,21 +210,15 @@ function afficherResultats(data) {
                 <div style="margin-top: 1rem;">
                     <strong>Montant restant après:</strong> ${formatMontant(sim.montantRestant)}
                 </div>
-            </div>
-
-            ${sim.donsUtilises.length > 0 ? `
-                <div class="resultat-section dons-list">
-                    <h3>🎁 Dons à utiliser</h3>
-                    <div class="dons-table">
-                        ${sim.donsUtilises.map(don => `
-                            <div class="don-row">
-                                <span class="don-designation">${echapperHTML(don.designation)}</span>
-                                <span class="don-quantite">Quantité: ${don.quantite}</span>
-                            </div>
-                        `).join('')}
-                    </div>
+                ${sim.sourceFinancement === 'stockArgent' ? `
+                <div style="margin-top: 0.5rem;">
+                    <strong>💰 Stock argent après validation:</strong> 
+                    <span style="color: ${sim.stockSuffisant ? '#27ae60' : '#e74c3c'}; font-weight: bold;">
+                        ${formatMontant(sim.stockDisponible - sim.montantNet)}
+                    </span>
                 </div>
-            ` : ''}
+                ` : ''}
+            </div>
 
             <div class="alert alert-info">
                 <strong>ℹ️ Info</strong>

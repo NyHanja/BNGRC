@@ -25,18 +25,14 @@ class StockArgentModel {
      * Si existe déjà → UPDATE la quantité
      */
     public function ajouter($idVille, $montant) {
-        // Utiliser INSERT ... ON DUPLICATE KEY UPDATE pour éviter les requêtes séparées
         $stmt = $this->db->prepare("
             INSERT INTO stockArgent (idVille, quantite) 
-            VALUES (:idVille, :montant)
+            VALUES (?, ?)
             ON DUPLICATE KEY UPDATE 
-                quantite = quantite + :montant_update
+                quantite = quantite + VALUES(quantite)
         ");
-        $stmt->bindParam(':idVille', $idVille, PDO::PARAM_INT);
-        $stmt->bindParam(':montant', $montant, PDO::PARAM_INT);
-        $stmt->bindParam(':montant_update', $montant, PDO::PARAM_INT);
         
-        return $stmt->execute();
+        return $stmt->execute([$idVille, $montant]);
     }
 
     /**

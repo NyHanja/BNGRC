@@ -3,8 +3,13 @@ $nonce = Flight::get('csp_nonce');
 ?>
 
 <div class="page-section">
-    <div class="page-header">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
         <h2>💰 Suivi du Stock d'Argent par Ville</h2>
+        <form method="POST" action="/stock-argent/redistribuer-tout" style="display:inline;">
+            <button type="submit" class="btn btn-primary" onclick="return confirm('Recalculer et redistribuer tous les dons d\'argent ?')">
+                🔄 Redistribuer tous les dons d'argent
+            </button>
+        </form>
     </div>
 
     <?php if (!empty($stocks)): ?>
