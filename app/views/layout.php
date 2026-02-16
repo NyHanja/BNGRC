@@ -21,6 +21,7 @@
                     <a href="<?php echo Flight::get('flight.base_url'); ?>villes">Villes</a>
                     <a href="<?php echo Flight::get('flight.base_url'); ?>besoins">Besoins</a>
                     <a href="<?php echo Flight::get('flight.base_url'); ?>dons">Dons</a>
+                    <a href="<?php echo Flight::get('flight.base_url'); ?>attributions">Attributions</a>
                 </nav>
                 <div class="user-menu">
                     <span class="user-name">Bienvenue</span>
@@ -40,6 +41,7 @@
                             <li><a href="<?php echo Flight::get('flight.base_url'); ?>villes" class="menu-item">🏘️ Villes</a></li>
                             <li><a href="<?php echo Flight::get('flight.base_url'); ?>besoins" class="menu-item">📋 Besoins</a></li>
                             <li><a href="<?php echo Flight::get('flight.base_url'); ?>dons" class="menu-item">🎁 Dons</a></li>
+                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>attributions" class="menu-item">📦 Attributions</a></li>
                         </ul>
                     </div>
                     

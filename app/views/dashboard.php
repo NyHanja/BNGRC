@@ -25,6 +25,14 @@
                 <p class="stat-value"><?php echo $totalDons; ?></p>
             </div>
         </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-info">
+                <p class="stat-label">Total Attributions</p>
+                <p class="stat-value"><?php echo $totalAttributions; ?></p>
+            </div>
+        </div>
     </div>
 
     <div class="dashboard-grid">
@@ -79,5 +87,29 @@
                 </tbody>
             </table>
         </div>
-    </div>
-</div>
+
+        <div class="dashboard-section">
+            <h3>Dernières Attributions</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Donateur</th>
+                        <th>Ville</th>
+                        <th>Désignation</th>
+                        <th>Quantité</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach($attributions as $attribution): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($attribution['donateur'] ?? 'N/A'); ?></td>
+                        <td><?php echo htmlspecialchars($attribution['ville'] ?? 'N/A'); ?></td>
+                        <td><?php echo htmlspecialchars($attribution['designation']); ?></td>
+                        <td><?php echo $attribution['quantiteAttribuee']; ?></td>
+                        <td><?php echo $attribution['dateAttribution']; ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
