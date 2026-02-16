@@ -68,7 +68,11 @@ INSERT INTO bngrc_dons (donateur, type, designation, montantUnitaire, quantite, 
 --     FOREIGN KEY (idVille) REFERENCES villes(id) ON DELETE CASCADE
 -- );
 
+-- <<<<<<< HEAD:public/assets/database/20260216-01-init.sql
+-- -- Données exemples pour attributions
+
 -- Données exemples pour attributions
+-- >>>>>>> dev:public/assets/database/database.sql
 -- INSERT INTO attributions (idDons, idVille, designation, quantiteAttribuee, dateAttribution) VALUES
 -- (1, 1, 'riz', 300, '2026-02-16'),
 -- (2, 1, 'tôle', 50, '2026-02-16'),
