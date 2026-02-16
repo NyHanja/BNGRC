@@ -1,3 +1,4 @@
+@ -1,26 +0,0 @@
 <div class="page-section">
     <div class="page-header">
         <h2><?php echo isset($ville) ? 'Modifier une ville' : 'Ajouter une ville'; ?></h2>

@@ -3,7 +3,7 @@
         <h2><?php echo isset($don) ? 'Modifier un don' : 'Ajouter un don'; ?></h2>
     </div>
 
-    <form method="POST" action="<?php echo Flight::get('flight.base_url'); ?>dons/save" class="form">
+    <form method="POST" action="dons/save" class="form">
         <?php if(isset($don)): ?>
         <input type="hidden" name="id" value="<?php echo $don['id']; ?>">
         <?php endif; ?>
@@ -40,7 +40,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
-            <a href="<?php echo Flight::get('flight.base_url'); ?>dons" class="btn btn-secondary">❌ Annuler</a>
+            <a href="dons" class="btn btn-secondary">❌ Annuler</a>
         </div>
     </form>
 </div>

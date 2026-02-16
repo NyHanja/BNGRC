@@ -1,8 +1,7 @@
-@ -1,150 +0,0 @@
 <div class="page-section">
     <div class="page-header">
         <h2>Rapport de Distribution - <?php echo htmlspecialchars($rapport['don']['donateur']); ?></h2>
-        <a href="<?php echo Flight::get('flight.base_url'); ?>dons" class="btn btn-secondary">← Retour</a>
+        <a href="dons" class="btn btn-secondary">← Retour</a>
     </div>
 
     <div class="rapport-container">
