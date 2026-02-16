@@ -492,38 +492,12 @@ class LayoutController {
         $frais = $montantBrut * $tauxFrais;
         $montantNet = $montantBrut + $frais;
 
-        // Pour les besoins d'argent : vérifier le stockArgent de la ville
-        $stockDisponible = 0;
-        $stockSuffisant = true;
-        $sourceFinancement = 'dons';
-
-        if ($besoinCible['typeBesoin'] === 'argent') {
-            $idVille = $besoinCible['idVille'];
-            $stock = $this->stockArgentModel->getByVille($idVille);
-            $stockDisponible = $stock ? (int)$stock['quantite'] : 0;
-            $stockSuffisant = $stockDisponible >= $montantNet;
-            $sourceFinancement = 'stockArgent';
-        }
-        
-        // Déterminer les dons à utiliser (pour les types non-argent)
-        $donsDisponibles = [];
-        if ($besoinCible['typeBesoin'] !== 'argent') {
-            $dons = $this->donModel->getAll();
-            $montantUtilise = 0;
-            foreach ($dons as $don) {
-                if ($montantUtilise >= $montantNet) break;
-                if ($don['type'] == $besoinCible['typeBesoin']) {
-                    $donValue = $don['montantUnitaire'] * $don['quantite'];
-                    $donsDisponibles[] = [
-                        'id' => $don['id'],
-                        'designation' => $don['designation'],
-                        'quantite' => $don['quantite'],
-                        'montantDisponible' => $donValue
-                    ];
-                    $montantUtilise += $donValue;
-                }
-            }
-        }
+        // Vérifier le stockArgent de la ville du besoin
+        $idVille = $besoinCible['idVille'];
+        $stock = $this->stockArgentModel->getByVille($idVille);
+        $stockDisponible = $stock ? (int)$stock['quantite'] : 0;
+        $stockSuffisant = $stockDisponible >= $montantNet;
+        $sourceFinancement = 'stockArgent';
 
         // Déterminer l'impact
         $quantiteRestante = $quantiteDisponible - $quantiteAAttribuer;
@@ -546,7 +520,7 @@ class LayoutController {
                 'sourceFinancement' => $sourceFinancement,
                 'stockDisponible' => $stockDisponible,
                 'stockSuffisant' => $stockSuffisant,
-                'donsUtilises' => $donsDisponibles
+                'villeNom' => $besoinCible['nomVille']
             ]
         ]);
     }
@@ -582,11 +556,13 @@ class LayoutController {
                 throw new \Exception('Ville non spécifiée');
             }
             
-            // Pour les besoins d'argent : déduire du stockArgent de la ville
-            if ($besoincible['typeBesoin'] === 'argent' && $montantNet > 0) {
+            // Déduire du stockArgent de la ville
+            if ($montantNet > 0) {
                 // Vérifier que le stock est suffisant
                 if (!$this->stockArgentModel->verifierStock($villeId, $montantNet)) {
-                    throw new \Exception('Stock d\'argent insuffisant pour la ville ' . $besoincible['nomVille'] . '. Disponible: ' . ($this->stockArgentModel->getByVille($villeId)['quantite'] ?? 0) . ' Ar');
+                    $stockActuel = $this->stockArgentModel->getByVille($villeId);
+                    $disponible = $stockActuel ? $stockActuel['quantite'] : 0;
+                    throw new \Exception('Stock d\'argent insuffisant pour ' . $besoincible['nomVille'] . '. Disponible: ' . number_format($disponible, 0, ',', ' ') . ' Ar, Nécessaire: ' . number_format($montantNet, 0, ',', ' ') . ' Ar');
                 }
                 $this->stockArgentModel->deduire($villeId, $montantNet);
             }
