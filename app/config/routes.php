@@ -1,6 +1,7 @@
 <?php
 
 use app\controllers\ApiExampleController;
+use app\controllers\LayoutController;
 use app\middlewares\SecurityHeadersMiddleware;
 use flight\Engine;
 use flight\net\Router;
@@ -13,12 +14,91 @@ use flight\net\Router;
 // This wraps all routes in the group with the SecurityHeadersMiddleware
 $router->group('', function(Router $router) use ($app) {
 
-	$router->get('/', function() use ($app) {
-		$controller = new ApiExampleController(Flight::app());
-		$produits = $controller->getAll();
-		$app->render('accueil', ['produits' => $produits]);
+	// Dashboard / Accueil
+	$router->get('/', function() {
+		$controller = new LayoutController();
+		$controller->dashboard();
 	});
 
+	// Routes Villes
+	$router->get('/villes', function() {
+		$controller = new LayoutController();
+		$controller->listVilles();
+	});
+
+	$router->get('/villes/create', function() {
+		$controller = new LayoutController();
+		$controller->createVille();
+	});
+
+	$router->get('/villes/@id/edit', function($id) {
+		$controller = new LayoutController();
+		$controller->editVille($id);
+	});
+
+	$router->post('/villes/save', function() {
+		$controller = new LayoutController();
+		$controller->saveVille();
+	});
+
+	$router->post('/villes/@id/delete', function($id) {
+		$controller = new LayoutController();
+		$controller->deleteVille($id);
+	});
+
+	// Routes Besoins
+	$router->get('/besoins', function() {
+		$controller = new LayoutController();
+		$controller->listBesoins();
+	});
+
+	$router->get('/besoins/create', function() {
+		$controller = new LayoutController();
+		$controller->createBesoin();
+	});
+
+	$router->get('/besoins/@id/edit', function($id) {
+		$controller = new LayoutController();
+		$controller->editBesoin($id);
+	});
+
+	$router->post('/besoins/save', function() {
+		$controller = new LayoutController();
+		$controller->saveBesoin();
+	});
+
+	$router->post('/besoins/@id/delete', function($id) {
+		$controller = new LayoutController();
+		$controller->deleteBesoin($id);
+	});
+
+	// Routes Dons
+	$router->get('/dons', function() {
+		$controller = new LayoutController();
+		$controller->listDons();
+	});
+
+	$router->get('/dons/create', function() {
+		$controller = new LayoutController();
+		$controller->createDon();
+	});
+
+	$router->get('/dons/@id/edit', function($id) {
+		$controller = new LayoutController();
+		$controller->editDon($id);
+	});
+
+	$router->post('/dons/save', function() {
+		$controller = new LayoutController();
+		$controller->saveDon();
+	});
+
+	$router->post('/dons/@id/delete', function($id) {
+		$controller = new LayoutController();
+		$controller->deleteDon($id);
+	});
+
+	// ========== Routes Anciennes (API & Produits) ==========
 
 	
 	$router->get('/produit/@id', function($id) use ($app) {
