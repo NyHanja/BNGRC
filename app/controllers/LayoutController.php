@@ -4,6 +4,8 @@ use app\models\VilleModel;
 use app\models\BesoinModel;
 use app\models\DonModel;
 use app\models\AttributionModel;
+use app\models\StockArgentModel;
+use app\models\RepartitionArgentModel;
 use app\services\DistributionService;
 use Flight;
 
@@ -12,6 +14,8 @@ class LayoutController {
     private $besoinModel;
     private $donModel;
     private $attributionModel;
+    private $stockArgentModel;
+    private $repartitionArgentModel;
     private $distributionService;
 
     public function __construct() {
@@ -20,6 +24,8 @@ class LayoutController {
         $this->besoinModel = new BesoinModel(Flight::db());
         $this->donModel = new DonModel(Flight::db());
         $this->attributionModel = new AttributionModel(Flight::db());
+        $this->stockArgentModel = new StockArgentModel(Flight::db());
+        $this->repartitionArgentModel = new RepartitionArgentModel(Flight::db());
         $this->distributionService = new DistributionService(Flight::db());
     }
 
@@ -149,7 +155,8 @@ class LayoutController {
      */
     public function createDon() {
         $data = [
-            'pageTitle' => 'Ajouter un don'
+            'pageTitle' => 'Ajouter un don',
+            'villes' => $this->villeModel->getAll()
         ];
 
         $this->render('dons/form', $data);
@@ -161,7 +168,8 @@ class LayoutController {
     public function editDon($id) {
         $data = [
             'pageTitle' => 'Modifier un don',
-            'don' => $this->donModel->getById($id)
+            'don' => $this->donModel->getById($id),
+            'villes' => $this->villeModel->getAll()
         ];
 
         $this->render('dons/form', $data);
@@ -210,6 +218,7 @@ class LayoutController {
         $montantUnitaire = Flight::request()->data->montantUnitaire;
         $quantite = Flight::request()->data->quantite;
         $dateSaisie = date('Y-m-d');
+        $idVilleDestinaire = Flight::request()->data->idVilleDestinaire ?? null;
 
         if($id) {
             // Mise à jour d'un don existant
@@ -224,7 +233,7 @@ class LayoutController {
                 Flight::redirect('/dons?msg=error');
             }
         } else {
-            // Créer un nouveau don
+            // Créer un nouveau don (sans idVille, sera spécifiée lors de l'attribution)
             $lastDonId = $this->donModel->create($donateur, $type, $designation, $montantUnitaire, $quantite, $dateSaisie);
             
             if ($lastDonId) {
@@ -424,6 +433,224 @@ class LayoutController {
             'derniersDons' => array_slice($dons, -5),
             'besoinsNonSatisfaites' => $besoinsNonSatisfaits,
         ]);
+    }
+
+    /**
+     * Page de simulation
+     */
+    public function simulation() {
+        $besoinsNonSatisfaits = $this->attributionModel->getRecap();
+        
+        $data = [
+            'pageTitle' => 'Simulation de Distribution',
+            'besoinsNonSatisfaits' => $besoinsNonSatisfaits,
+            'dons' => $this->donModel->getAll()
+        ];
+        $this->render('simulation', $data);
+    }
+
+    /**
+     * API: Simuler la distribution (sans modification)
+     */
+    public function simulationApi() {
+        // Récupérer les paramètres
+        $besoinId = Flight::request()->query['besoinId'];
+        $quantiteVoulue = Flight::request()->query['quantite'] ?? 1;
+        $tauxFrais = Flight::request()->query['frais'] ?? 0.05; // 5% par défaut
+
+        // Récupérer le besoin et les dons
+        $besoins = $this->besoinModel->getAll();
+        $dons = $this->donModel->getAll();
+        $besoinsNonSatisfaits = $this->attributionModel->getRecap();
+
+        // Chercher le besoin dans les besoins non satisfaits
+        $besoinCible = null;
+        foreach ($besoinsNonSatisfaits as $b) {
+            if ($b['idBesoin'] == $besoinId) {
+                $besoinCible = $b;
+                break;
+            }
+        }
+
+        if (!$besoinCible) {
+            Flight::json([
+                'success' => false,
+                'message' => 'Besoin non trouvé'
+            ]);
+            return;
+        }
+
+        // Calculs de simulation
+        $quantiteDisponible = $besoinCible['quantiteNonSatisfaite'];
+        $quantiteAAttribuer = min($quantiteVoulue, $quantiteDisponible);
+        
+        // Montant calculation
+        $montantUnitaire = $besoinCible['MontantBesoin'] / $besoinCible['quantiteBesoin'];
+        $montantBrut = $montantUnitaire * $quantiteAAttribuer;
+        $frais = $montantBrut * $tauxFrais;
+        $montantNet = $montantBrut + $frais;
+        
+        // Déterminer les dons à utiliser
+        $donsDisponibles = [];
+        $montantUtilise = 0;
+        
+        foreach ($dons as $don) {
+            if ($montantUtilise >= $montantNet) break;
+            if ($don['type'] == $besoinCible['typeBesoin']) {
+                $donValue = ($don['type'] == 'argent') ? $don['quantite'] : ($don['montantUnitaire'] * $don['quantite']);
+                $donsDisponibles[] = [
+                    'id' => $don['id'],
+                    'designation' => $don['designation'],
+                    'quantite' => $don['quantite'],
+                    'montantDisponible' => $donValue
+                ];
+                $montantUtilise += $donValue;
+            }
+        }
+
+        // Déterminer l'impact
+        $impactQuantiteBesoin = $quantiteAAttribuer;
+        $quantiteRestante = $quantiteDisponible - $quantiteAAttribuer;
+        $montantRestant = $besoinCible['MontantBesoinNonSatisfait'] - $montantBrut;
+
+        Flight::json([
+            'success' => true,
+            'besoin' => $besoinCible,
+            'simulation' => [
+                'quantiteVoulue' => $quantiteVoulue,
+                'quantiteDisponible' => $quantiteDisponible,
+                'quantiteAAttribuer' => $quantiteAAttribuer,
+                'montantUnitaire' => $montantUnitaire,
+                'montantBrut' => $montantBrut,
+                'tauxFrais' => $tauxFrais * 100,
+                'frais' => $frais,
+                'montantNet' => $montantNet,
+                'quantiteRestante' => $quantiteRestante,
+                'montantRestant' => $montantRestant,
+                'donsUtilises' => $donsDisponibles
+            ]
+        ]);
+    }
+
+    /**
+     * API: Valider et enregistrer la distribution
+     */
+    public function validerSimulation() {
+        $data = Flight::request()->data;
+        
+        $besoinId = $data->besoinId;
+        $quantiteAAttribuer = $data->quantite;
+        $montantNet = $data->montantNet ?? 0;
+        $idVilleDestinaire = $data->idVilleDestinaire ?? null;
+        
+        try {
+            $besoinsNonSatisfaits = $this->attributionModel->getRecap();
+            
+            // Trouve le besoin
+            $besoincible = null;
+            foreach ($besoinsNonSatisfaits as $b) {
+                if ($b['idBesoin'] == $besoinId) {
+                    $besoincible = $b;
+                    break;
+                }
+            }
+            
+            if (!$besoincible) {
+                throw new \Exception('Besoin non trouvé');
+            }
+            
+            $villeId = $besoincible['id'] ?? null;
+            if (!$villeId && !$idVilleDestinaire) {
+                throw new \Exception('Ville non spécifiée');
+            }
+            
+            $villeId = $idVilleDestinaire ?: $villeId;
+            
+            // Déduire du stock d'argent si besoin d'argent
+            if ($besoincible['typeBesoin'] === 'argent' && $montantNet > 0) {
+                $this->stockArgentModel->deduire($villeId, $montantNet);
+            }
+            
+            // Créer l'attribution
+            $this->attributionModel->create(
+                $besoincible['idBesoin'],
+                $villeId,
+                $besoincible['designationBesoin'],
+                $quantiteAAttribuer,
+                date('Y-m-d')
+            );
+            
+            // Vérifier si le besoin est maintenant complètement satisfait
+            // Si oui et c'est un besoin d'argent, répartir les argents restants
+            $this->verifierEtRepartirArgentSiComplet($besoincible['idBesoin'], 
+                                                      $besoincible['typeBesoin'],
+                                                      $besoincible['quantiteRequise']);
+            
+            Flight::json([
+                'success' => true,
+                'message' => 'Attribution enregistrée avec succès',
+                'quantiteAttribuee' => $quantiteAAttribuer
+            ]);
+            
+        } catch (\Exception $e) {
+            Flight::json([
+                'success' => false,
+                'message' => 'Erreur: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Lister les stocks d'argent par ville
+     */
+    public function listStockArgent() {
+        $data = [
+            'pageTitle' => 'Suivi du Stock d\'Argent',
+            'stocks' => $this->stockArgentModel->getAll()
+        ];
+        $this->render('stock-argent', $data);
+    }
+
+    /**
+     * Lister l'historique des répartitions d'argent
+     */
+    public function repartitionHistorique() {
+        $data = [
+            'pageTitle' => 'Historique de Répartition d\'Argent',
+            'historique' => $this->repartitionArgentModel->getHistorique()
+        ];
+        $this->render('repartition-historique', $data);
+    }
+
+    /**
+     * Vérifier si un besoin est complètement satisfait
+     * Si oui et c'est un besoin d'argent, répartir les argents restants entre les villes
+     */
+    private function verifierEtRepartirArgentSiComplet($idBesoin, $typeBesoin, $quantiteRequise) {
+        try {
+            // Récupérer les attributions pour ce besoin
+            $stmt = Flight::db()->prepare("
+                SELECT SUM(quantiteAttribuee) as quantiteTotale
+                FROM bngrc_attributions
+                WHERE idBesoin = ?
+            ");
+            $stmt->execute([$idBesoin]);
+            $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $quantiteAttribuee = $result['quantiteTotale'] ?? 0;
+            
+            // Si besoin d'argent et complètement satisfait, répartir les argents excédentaires
+            if ($typeBesoin === 'argent' && $quantiteAttribuee >= $quantiteRequise) {
+                $argentExcedent = $quantiteAttribuee - $quantiteRequise;
+                
+                if ($argentExcedent > 0) {
+                    // Répartir l'argent excédentaire entre toutes les villes
+                    $this->repartitionArgentModel->repartirParVilles($idBesoin, $argentExcedent);
+                }
+            }
+        } catch (\Exception $e) {
+            // Logger l'erreur mais ne pas bloquer le processus
+            error_log("Erreur repartition argent: " . $e->getMessage());
+        }
     }
 }
 ?>
