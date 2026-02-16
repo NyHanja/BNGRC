@@ -57,7 +57,7 @@ $app->set('flight.content_length', false);    // Send content length header. Usu
 // Generate a CSP nonce for each request and store in $app
 $nonce = bin2hex(random_bytes(16));
 $app->set('csp_nonce', $nonce);
-
+// M8vxGBGk
 /**********************************************
  *           User Configuration               *
  **********************************************/

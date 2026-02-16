@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo isset($pageTitle) ? $pageTitle : 'BNGRC - Gestion des Dons'; ?></title>
-    <link rel="stylesheet" href="<?php echo Flight::get('flight.base_url'); ?>styles.css">
-    <link rel="stylesheet" href="<?php echo Flight::get('flight.base_url'); ?>layout.css">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/layout.css">
 </head>
 <body>
     <div class="app-container">
@@ -17,11 +17,11 @@
                     <p>Gestion des Dons</p>
                 </div>
                 <nav class="header-nav">
-                    <a href="<?php echo Flight::get('flight.base_url'); ?>">Accueil</a>
-                    <a href="<?php echo Flight::get('flight.base_url'); ?>villes">Villes</a>
-                    <a href="<?php echo Flight::get('flight.base_url'); ?>besoins">Besoins</a>
-                    <a href="<?php echo Flight::get('flight.base_url'); ?>dons">Dons</a>
-                    <a href="<?php echo Flight::get('flight.base_url'); ?>attributions">Attributions</a>
+                    <a href="/">Accueil</a>
+                    <a href="/villes">Villes</a>
+                    <a href="/besoins">Besoins</a>
+                    <a href="/dons">Dons</a>
+                    <a href="/attributions">Attributions</a>
                 </nav>
                 <div class="user-menu">
                     <span class="user-name">Bienvenue</span>
@@ -37,27 +37,28 @@
                     <div class="menu-section">
                         <h3>Navigation</h3>
                         <ul>
-                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>" class="menu-item">📊 Tableau de bord</a></li>
-                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>villes" class="menu-item">🏘️ Villes</a></li>
-                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>besoins" class="menu-item">📋 Besoins</a></li>
-                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>dons" class="menu-item">🎁 Dons</a></li>
-                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>attributions" class="menu-item">📦 Attributions</a></li>
+                            <li><a href="/" class="menu-item">📊 Tableau de bord</a></li>
+                            <li><a href="/villes" class="menu-item">🏘️ Villes</a></li>
+                            <li><a href="/besoins" class="menu-item">📋 Besoins</a></li>
+                            <li><a href="/dons" class="menu-item">🎁 Dons</a></li>
+                            <li><a href="/attributions" class="menu-item">📦 Attributions</a></li>
                         </ul>
                     </div>
                     
                     <div class="menu-section">
                         <h3>Gestion</h3>
                         <ul>
-                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>villes/create" class="menu-item">➕ Ajouter ville</a></li>
-                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>besoins/create" class="menu-item">➕ Ajouter besoin</a></li>
-                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>dons/create" class="menu-item">➕ Ajouter don</a></li>
+                            <li><a href="/villes/create" class="menu-item">➕ Ajouter ville</a></li>
+                            <li><a href="/besoins/create" class="menu-item">➕ Ajouter besoin</a></li>
+
+                            <li><a href="/dons/create" class="menu-item">➕ Ajouter don</a></li>
                         </ul>
                     </div>
 
                     <div class="menu-section">
                         <h3>Rapports</h3>
                         <ul>
-                            <li><a href="<?php echo Flight::get('flight.base_url'); ?>rapports" class="menu-item">📈 Statistiques</a></li>
+                            <li><a href="/rapports" class="menu-item">📈 Statistiques</a></li>
                         </ul>
                     </div>
                 </div>
@@ -104,6 +105,6 @@
         </footer>
     </div>
 
-    <script src="<?php echo Flight::get('flight.base_url'); ?>layout.js"></script>
+    <script src="/layout.js"></script>
 </body>
 </html>

@@ -74,3 +74,5 @@ INSERT INTO bngrc_attributions (idDons, idVille, designation, quantiteAttribuee,
 (1, 1, 'riz', 300, '2026-02-16'),
 (2, 1, 'tôle', 50, '2026-02-16'),
 (3, 2, 'fonds secours', 1000, '2026-02-16');
+
+

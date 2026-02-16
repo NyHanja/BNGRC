@@ -1,7 +1,7 @@
 <div class="page-section">
     <div class="page-header">
         <h2>Gestion des Attributions</h2>
-        <a href="<?php echo Flight::get('flight.base_url'); ?>attributions/create" class="btn btn-primary">➕ Ajouter une attribution</a>
+        <a href="attributions/create" class="btn btn-primary">➕ Ajouter une attribution</a>
     </div>
 
     <?php if(isset($_GET['msg'])): ?>
@@ -39,8 +39,8 @@
                 <td><?php echo $attribution['dateAttribution']; ?></td>
                 <td><span class="badge badge-<?php echo $attribution['type'] ?? 'nature'; ?>"><?php echo ucfirst($attribution['type'] ?? 'N/A'); ?></span></td>
                 <td>
-                    <a href="<?php echo Flight::get('flight.base_url'); ?>attributions/<?php echo $attribution['id']; ?>/edit" class="btn btn-sm btn-warning">✏️ Éditer</a>
-                    <form method="POST" action="<?php echo Flight::get('flight.base_url'); ?>attributions/<?php echo $attribution['id']; ?>/delete" style="display:inline;">
+                    <a href="attributions/<?php echo $attribution['id']; ?>/edit" class="btn btn-sm btn-warning">✏️ Éditer</a>
+                    <form method="POST" action="attributions/<?php echo $attribution['id']; ?>/delete" style="display:inline;">
                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr?')">🗑️ Supprimer</button>
                     </form>
                 </td>

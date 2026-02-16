@@ -3,7 +3,7 @@
         <h2><?php echo isset($besoin) ? 'Modifier un besoin' : 'Ajouter un besoin'; ?></h2>
     </div>
 
-    <form method="POST" action="<?php echo Flight::get('flight.base_url'); ?>besoins/save" class="form">
+    <form method="POST" action="besoins/save" class="form">
         <?php if(isset($besoin)): ?>
         <input type="hidden" name="id" value="<?php echo $besoin['id']; ?>">
         <?php endif; ?>
@@ -47,7 +47,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
-            <a href="<?php echo Flight::get('flight.base_url'); ?>besoins" class="btn btn-secondary">❌ Annuler</a>
+            <a href="besoins" class="btn btn-secondary">❌ Annuler</a>
         </div>
     </form>
 </div>

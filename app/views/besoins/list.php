@@ -1,7 +1,7 @@
 <div class="page-section">
     <div class="page-header">
         <h2>Gestion des Besoins</h2>
-        <a href="<?php echo Flight::get('flight.base_url'); ?>besoins/create" class="btn btn-primary">➕ Ajouter un besoin</a>
+        <a href="besoins/create" class="btn btn-primary">➕ Ajouter un besoin</a>
     </div>
 
     <?php if(isset($_GET['msg'])): ?>
@@ -39,8 +39,8 @@
                 <td><?php echo $besoin['quantite']; ?></td>
                 <td><?php echo $besoin['dateSaisie']; ?></td>
                 <td>
-                    <a href="<?php echo Flight::get('flight.base_url'); ?>besoins/<?php echo $besoin['id']; ?>/edit" class="btn btn-sm btn-warning">✏️ Éditer</a>
-                    <form method="POST" action="<?php echo Flight::get('flight.base_url'); ?>besoins/<?php echo $besoin['id']; ?>/delete" style="display:inline;">
+                    <a href="besoins/<?php echo $besoin['id']; ?>/edit" class="btn btn-sm btn-warning">✏️ Éditer</a>
+                    <form method="POST" action="besoins/<?php echo $besoin['id']; ?>/delete" style="display:inline;">
                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr?')">🗑️ Supprimer</button>
                     </form>
                 </td>
