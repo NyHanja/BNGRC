@@ -67,3 +67,52 @@ GROUP BY
 HAVING
     quantiteNonSatisfaite > 0;
 SELECT * FROM vue_besoins_non_satisfaits;
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE VIEW vue_besoins_non_satisfaits AS
+SELECT
+    v.nom AS nomVille,
+    v.region AS regionVille,
+    b.id AS idBesoin,
+    b.type AS typeBesoin,
+    b.designation AS designationBesoin,
+    b.quantite AS quantiteBesoin,
+
+    -- Quantité déjà attribuée
+    COALESCE(SUM(a.quantiteAttribuee), 0) AS quantiteAttribuee,
+
+    -- Quantité restante
+    (b.quantite - COALESCE(SUM(a.quantiteAttribuee), 0)) AS quantiteNonSatisfaite,
+
+    -- Montant total du besoin
+    (b.prixUnitaire * b.quantite) AS MontantBesoin,
+
+    -- Montant déjà attribué
+    (b.prixUnitaire * COALESCE(SUM(a.quantiteAttribuee), 0)) AS MontantBesoinAttribue,
+
+    -- Montant restant
+    (b.prixUnitaire * 
+        (b.quantite - COALESCE(SUM(a.quantiteAttribuee), 0))
+    ) AS MontantBesoinNonSatisfait
+
+FROM bngrc_villes v
+
+JOIN bngrc_besoins b 
+    ON v.id = b.idVille
+
+LEFT JOIN bngrc_attributions a 
+    ON b.idVille = a.idVille
+    AND b.designation = a.designation
+
+GROUP BY v.id, b.id
+
+HAVING quantiteNonSatisfaite > 0;
+
+SELECT * FROM vue_besoins_non_satisfaits;

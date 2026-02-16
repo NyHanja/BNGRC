@@ -1,3 +1,7 @@
+<?php
+$nonce = Flight::get('csp_nonce');
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -22,6 +26,7 @@
                     <a href="/besoins">Besoins</a>
                     <a href="/dons">Dons</a>
                     <a href="/attributions">Attributions</a>
+                    <a href="/recap">Récapitulatif</a>
                 </nav>
                 <div class="user-menu">
                     <span class="user-name">Bienvenue</span>
@@ -42,6 +47,7 @@
                             <li><a href="/besoins" class="menu-item">📋 Besoins</a></li>
                             <li><a href="/dons" class="menu-item">🎁 Dons</a></li>
                             <li><a href="/attributions" class="menu-item">📦 Attributions</a></li>
+                            <li><a href="/recap" class="menu-item">📊 Récapitulatif</a></li>
                         </ul>
                     </div>
                     
@@ -96,7 +102,7 @@
                 <div class="footer-section">
                     <h4>Contact</h4>
                     <p>Email: info@bngrc.mg</p>
-                    <p>Tél: +261 XX XXX XXXX</p>
+                    <p>ETU003942--ETU004263--ETU004300</p>
                 </div>
                 <div class="footer-bottom">
                     <p>&copy; 2026 BNGRC. Tous droits réservés. | Créé par Harena, Nekena et NyHanja</p>
@@ -105,6 +111,6 @@
         </footer>
     </div>
 
-    <script src="/layout.js"></script>
+    <script src="/layout.js" nonce="<?= $nonce ?>"></script>
 </body>
 </html>

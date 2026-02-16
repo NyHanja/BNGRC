@@ -358,5 +358,72 @@ class LayoutController {
             Flight::redirect('/dons/' . $idDon . '/rapport?msg=error');
         }
     }
+    public function recap() {
+        $besoinsNonSatisfaits = $this->attributionModel->getRecap();
+        
+        $data = [
+            'pageTitle' => 'Récapitulatif - Besoins non satisfaits',
+            'totalVilles' => $this->villeModel->count(),
+            'totalBesoins' => $this->besoinModel->count(),
+            'totalDons' => $this->donModel->count(),
+            'totalAttributions' => $this->attributionModel->count(),
+            'besoinsNonSatisfaits' => $besoinsNonSatisfaits
+        ];
+        $this->render('recap', $data);
+    }
+
+    /**
+     * API pour récupérer le récapitulatif en JSON
+     */
+    public function recapApi() {
+        $villes = $this->villeModel->getAll();
+        $besoins = $this->besoinModel->getAll();
+        $dons = $this->donModel->getAll();
+        $attributions = $this->attributionModel->getAll();
+        
+        // Récupérer los besoins non satisfaits
+        $besoinsNonSatisfaits = $this->attributionModel->getRecap();
+        
+        // Statistiques globales sur besoins non satisfaits
+        $statsNonSatisfaits = [
+            'total' => count($besoinsNonSatisfaits),
+            'montantNonSatisfait' => 0,
+            'quantiteNonSatisfaite' => 0,
+        ];
+        
+        foreach ($besoinsNonSatisfaits as $besoin) {
+            $statsNonSatisfaits['quantiteNonSatisfaite'] += $besoin['quantiteNonSatisfaite'];
+            $statsNonSatisfaits['montantNonSatisfait'] += $besoin['MontantBesoinNonSatisfait'];
+        }
+        
+        // Statistiques par ville (besoins satisfaits vs non satisfaits)
+        $statsByVille = [];
+        foreach ($villes as $ville) {
+            $villeId = $ville['id'];
+            $besoinsByVille = array_filter($besoins, fn($b) => $b['idVille'] == $villeId);
+            $besoinNonSatisfaitByVille = array_filter($besoinsNonSatisfaits, fn($b) => strpos($b['nomVille'], $ville['nom']) !== false);
+            
+            $statsByVille[] = [
+                'ville' => $ville['nom'],
+                'nb_besoins_total' => count($besoinsByVille),
+                'nb_besoins_non_satisfaits' => count($besoinNonSatisfaitByVille),
+                'montant_non_satisfait' => array_sum(array_column($besoinNonSatisfaitByVille, 'MontantBesoinNonSatisfait'))
+            ];
+        }
+        
+        Flight::json([
+            'success' => true,
+            'stats' => [
+                'totalVilles' => count($villes),
+                'totalBesoins' => count($besoins),
+                'totalDons' => count($dons),
+                'totalAttributions' => count($attributions),
+                'besoinsNonSatisfaits' => $statsNonSatisfaits,
+            ],
+            'parVille' => $statsByVille,
+            'derniersDons' => array_slice($dons, -5),
+            'besoinsNonSatisfaites' => $besoinsNonSatisfaits,
+        ]);
+    }
 }
 ?>
