@@ -220,6 +220,11 @@ class LayoutController {
         $dateSaisie = date('Y-m-d');
         $idVilleDestinaire = Flight::request()->data->idVilleDestinaire ?? null;
 
+        // Pour les dons d'argent, forcer quantite=1 (montantUnitaire = montant total)
+        if ($type === 'argent') {
+            $quantite = 1;
+        }
+
         if($id) {
             // Mise à jour d'un don existant
             $this->donModel->update($id, $donateur, $type, $designation, $montantUnitaire, $quantite, $dateSaisie);
@@ -458,9 +463,6 @@ class LayoutController {
         $quantiteVoulue = Flight::request()->query['quantite'] ?? 1;
         $tauxFrais = Flight::request()->query['frais'] ?? 0.05; // 5% par défaut
 
-        // Récupérer le besoin et les dons
-        $besoins = $this->besoinModel->getAll();
-        $dons = $this->donModel->getAll();
         $besoinsNonSatisfaits = $this->attributionModel->getRecap();
 
         // Chercher le besoin dans les besoins non satisfaits
@@ -489,27 +491,41 @@ class LayoutController {
         $montantBrut = $montantUnitaire * $quantiteAAttribuer;
         $frais = $montantBrut * $tauxFrais;
         $montantNet = $montantBrut + $frais;
+
+        // Pour les besoins d'argent : vérifier le stockArgent de la ville
+        $stockDisponible = 0;
+        $stockSuffisant = true;
+        $sourceFinancement = 'dons';
+
+        if ($besoinCible['typeBesoin'] === 'argent') {
+            $idVille = $besoinCible['idVille'];
+            $stock = $this->stockArgentModel->getByVille($idVille);
+            $stockDisponible = $stock ? (int)$stock['quantite'] : 0;
+            $stockSuffisant = $stockDisponible >= $montantNet;
+            $sourceFinancement = 'stockArgent';
+        }
         
-        // Déterminer les dons à utiliser
+        // Déterminer les dons à utiliser (pour les types non-argent)
         $donsDisponibles = [];
-        $montantUtilise = 0;
-        
-        foreach ($dons as $don) {
-            if ($montantUtilise >= $montantNet) break;
-            if ($don['type'] == $besoinCible['typeBesoin']) {
-                $donValue = ($don['type'] == 'argent') ? $don['quantite'] : ($don['montantUnitaire'] * $don['quantite']);
-                $donsDisponibles[] = [
-                    'id' => $don['id'],
-                    'designation' => $don['designation'],
-                    'quantite' => $don['quantite'],
-                    'montantDisponible' => $donValue
-                ];
-                $montantUtilise += $donValue;
+        if ($besoinCible['typeBesoin'] !== 'argent') {
+            $dons = $this->donModel->getAll();
+            $montantUtilise = 0;
+            foreach ($dons as $don) {
+                if ($montantUtilise >= $montantNet) break;
+                if ($don['type'] == $besoinCible['typeBesoin']) {
+                    $donValue = $don['montantUnitaire'] * $don['quantite'];
+                    $donsDisponibles[] = [
+                        'id' => $don['id'],
+                        'designation' => $don['designation'],
+                        'quantite' => $don['quantite'],
+                        'montantDisponible' => $donValue
+                    ];
+                    $montantUtilise += $donValue;
+                }
             }
         }
 
         // Déterminer l'impact
-        $impactQuantiteBesoin = $quantiteAAttribuer;
         $quantiteRestante = $quantiteDisponible - $quantiteAAttribuer;
         $montantRestant = $besoinCible['MontantBesoinNonSatisfait'] - $montantBrut;
 
@@ -527,6 +543,9 @@ class LayoutController {
                 'montantNet' => $montantNet,
                 'quantiteRestante' => $quantiteRestante,
                 'montantRestant' => $montantRestant,
+                'sourceFinancement' => $sourceFinancement,
+                'stockDisponible' => $stockDisponible,
+                'stockSuffisant' => $stockSuffisant,
                 'donsUtilises' => $donsDisponibles
             ]
         ]);
@@ -541,7 +560,6 @@ class LayoutController {
         $besoinId = $data->besoinId;
         $quantiteAAttribuer = $data->quantite;
         $montantNet = $data->montantNet ?? 0;
-        $idVilleDestinaire = $data->idVilleDestinaire ?? null;
         
         try {
             $besoinsNonSatisfaits = $this->attributionModel->getRecap();
@@ -559,15 +577,17 @@ class LayoutController {
                 throw new \Exception('Besoin non trouvé');
             }
             
-            $villeId = $besoincible['id'] ?? null;
-            if (!$villeId && !$idVilleDestinaire) {
+            $villeId = $besoincible['idVille'];
+            if (!$villeId) {
                 throw new \Exception('Ville non spécifiée');
             }
             
-            $villeId = $idVilleDestinaire ?: $villeId;
-            
-            // Déduire du stock d'argent si besoin d'argent
+            // Pour les besoins d'argent : déduire du stockArgent de la ville
             if ($besoincible['typeBesoin'] === 'argent' && $montantNet > 0) {
+                // Vérifier que le stock est suffisant
+                if (!$this->stockArgentModel->verifierStock($villeId, $montantNet)) {
+                    throw new \Exception('Stock d\'argent insuffisant pour la ville ' . $besoincible['nomVille'] . '. Disponible: ' . ($this->stockArgentModel->getByVille($villeId)['quantite'] ?? 0) . ' Ar');
+                }
                 $this->stockArgentModel->deduire($villeId, $montantNet);
             }
             
@@ -580,15 +600,9 @@ class LayoutController {
                 date('Y-m-d')
             );
             
-            // Vérifier si le besoin est maintenant complètement satisfait
-            // Si oui et c'est un besoin d'argent, répartir les argents restants
-            $this->verifierEtRepartirArgentSiComplet($besoincible['idBesoin'], 
-                                                      $besoincible['typeBesoin'],
-                                                      $besoincible['quantiteRequise']);
-            
             Flight::json([
                 'success' => true,
-                'message' => 'Attribution enregistrée avec succès',
+                'message' => 'Attribution enregistrée avec succès. ' . ($besoincible['typeBesoin'] === 'argent' ? number_format($montantNet, 0, ',', ' ') . ' Ar déduits du stock.' : ''),
                 'quantiteAttribuee' => $quantiteAAttribuer
             ]);
             
@@ -609,6 +623,19 @@ class LayoutController {
             'stocks' => $this->stockArgentModel->getAll()
         ];
         $this->render('stock-argent', $data);
+    }
+
+    /**
+     * Redistribuer tous les dons d'argent existants dans stockArgent
+     */
+    public function redistribuerTousDonsArgent() {
+        $resultat = $this->distributionService->redistribuerTousDonsArgent();
+        
+        if ($resultat['success']) {
+            Flight::redirect('/stock-argent?msg=redistributed');
+        } else {
+            Flight::redirect('/stock-argent?msg=error&detail=' . urlencode($resultat['message']));
+        }
     }
 
     /**

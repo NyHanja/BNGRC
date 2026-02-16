@@ -167,6 +167,11 @@ $router->group('', function(Router $router) use ($app) {
 		$controller->listStockArgent();
 	});
 
+	$router->post('/stock-argent/redistribuer-tout', function() {
+		$controller = new LayoutController();
+		$controller->redistribuerTousDonsArgent();
+	});
+
 	$router->get('/stock-argent/repartition-historique', function() {
 		$controller = new LayoutController();
 		$controller->repartitionHistorique();

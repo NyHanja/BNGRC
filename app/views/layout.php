@@ -26,6 +26,7 @@ $nonce = Flight::get('csp_nonce');
                     <a href="/besoins">Besoins</a>
                     <a href="/dons">Dons</a>
                     <a href="/attributions">Attributions</a>
+                    <a href="/stock-argent">Stock Argent</a>
                     <a href="/recap">Récapitulatif</a>
                     <a href="/simulation">Simulation</a>
                 </nav>
@@ -48,6 +49,7 @@ $nonce = Flight::get('csp_nonce');
                             <li><a href="/besoins" class="menu-item">📋 Besoins</a></li>
                             <li><a href="/dons" class="menu-item">🎁 Dons</a></li>
                             <li><a href="/attributions" class="menu-item">📦 Attributions</a></li>
+                            <li><a href="/stock-argent" class="menu-item">💰 Stock Argent</a></li>
                             <li><a href="/recap" class="menu-item">📊 Récapitulatif</a></li>
                             <li><a href="/simulation" class="menu-item">🧪 Simulation</a></li>
                         </ul>

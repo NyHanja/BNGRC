@@ -17,8 +17,11 @@ class RepartitionArgentModel {
      */
     public function creerRepartition($idBesoin, $montantReparti, $repartition) {
         try {
-            // Commencer transaction
-            $this->db->beginTransaction();
+            // Ne démarrer une transaction que si on n'est pas déjà dans une
+            $inTransaction = $this->db->inTransaction();
+            if (!$inTransaction) {
+                $this->db->beginTransaction();
+            }
             
             // Créer enregistrement repartition
             $stmt = $this->db->prepare("
@@ -38,10 +41,14 @@ class RepartitionArgentModel {
                 $stmtDetail->execute([$idRepartition, $idVille, $montant]);
             }
             
-            $this->db->commit();
+            if (!$inTransaction) {
+                $this->db->commit();
+            }
             return true;
         } catch (\Exception $e) {
-            $this->db->rollBack();
+            if (!($this->db->inTransaction() && $inTransaction)) {
+                $this->db->rollBack();
+            }
             throw new \Exception("Erreur repartition: " . $e->getMessage());
         }
     }
