@@ -152,11 +152,17 @@ $router->group('', function(Router $router) use ($app) {
 		echo '<h1>Hello world! Oh hey '.$name.'!</h1>';
 	});
 
+	$router->get('/recap', function() {
+		$controller = new LayoutController();
+		$controller->recap();
+	});
+
 	$router->group('/api', function() use ($router) {
 		$router->get('/produits', [ ApiExampleController::class, 'getAll' ]);
 		$router->get('/users', [ ApiExampleController::class, 'getUsers' ]);
 		$router->get('/users/@id:[0-9]', [ ApiExampleController::class, 'getUser' ]);
 		$router->post('/users/@id:[0-9]', [ ApiExampleController::class, 'updateUser' ]);
+		$router->get('/recap', [LayoutController::class, 'recapApi']);
 	});
 	
 }, [ SecurityHeadersMiddleware::class ]);

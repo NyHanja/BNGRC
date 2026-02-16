@@ -128,5 +128,11 @@ class AttributionModel {
                                  FROM bngrc_attributions");
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+    public function getRecap(){
+        $stmt = $this->db->prepare("SELECT * FROM vue_besoins_non_satisfaits");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);   
+    }
 }
+
 ?>
