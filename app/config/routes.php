@@ -157,12 +157,29 @@ $router->group('', function(Router $router) use ($app) {
 		$controller->recap();
 	});
 
+	$router->get('/simulation', function() {
+		$controller = new LayoutController();
+		$controller->simulation();
+	});
+
+	$router->get('/stock-argent', function() {
+		$controller = new LayoutController();
+		$controller->listStockArgent();
+	});
+
+	$router->get('/stock-argent/repartition-historique', function() {
+		$controller = new LayoutController();
+		$controller->repartitionHistorique();
+	});
+
 	$router->group('/api', function() use ($router) {
 		$router->get('/produits', [ ApiExampleController::class, 'getAll' ]);
 		$router->get('/users', [ ApiExampleController::class, 'getUsers' ]);
 		$router->get('/users/@id:[0-9]', [ ApiExampleController::class, 'getUser' ]);
 		$router->post('/users/@id:[0-9]', [ ApiExampleController::class, 'updateUser' ]);
 		$router->get('/recap', [LayoutController::class, 'recapApi']);
+		$router->get('/simulation', [LayoutController::class, 'simulationApi']);
+		$router->post('/simulation/valider', [LayoutController::class, 'validerSimulation']);
 	});
 	
 }, [ SecurityHeadersMiddleware::class ]);

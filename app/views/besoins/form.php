@@ -3,7 +3,7 @@
         <h2><?php echo isset($besoin) ? 'Modifier un besoin' : 'Ajouter un besoin'; ?></h2>
     </div>
 
-    <form method="POST" action="besoins/save" class="form">
+    <form method="POST" action="/besoins/save" class="form">
         <?php if(isset($besoin)): ?>
         <input type="hidden" name="id" value="<?php echo $besoin['id']; ?>">
         <?php endif; ?>
