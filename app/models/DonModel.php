@@ -49,7 +49,10 @@ class DonModel {
         $stmt->bindParam(':montantUnitaire', $montantUnitaire);
         $stmt->bindParam(':quantite', $quantite, PDO::PARAM_INT);
         $stmt->bindParam(':dateSaisie', $dateSaisie);
-        return $stmt->execute();
+        $result = $stmt->execute();
+        
+        // Retourner l'ID du don inséré
+        return $result ? $this->db->lastInsertId() : false;
     }
 
     /**

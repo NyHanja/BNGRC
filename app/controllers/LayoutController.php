@@ -3,18 +3,24 @@ namespace app\controllers;
 use app\models\VilleModel;
 use app\models\BesoinModel;
 use app\models\DonModel;
+use app\models\AttributionModel;
+use app\services\DistributionService;
 use Flight;
 
 class LayoutController {
     private $villeModel;
     private $besoinModel;
     private $donModel;
+    private $attributionModel;
+    private $distributionService;
 
     public function __construct() {
         // Récupérer la base de données depuis Flight
         $this->villeModel = new VilleModel(Flight::db());
         $this->besoinModel = new BesoinModel(Flight::db());
         $this->donModel = new DonModel(Flight::db());
+        $this->attributionModel = new AttributionModel(Flight::db());
+        $this->distributionService = new DistributionService(Flight::db());
     }
 
     /**
@@ -43,9 +49,11 @@ class LayoutController {
             'totalVilles' => $this->villeModel->count(),
             'totalBesoins' => $this->besoinModel->count(),
             'totalDons' => $this->donModel->count(),
+            'totalAttributions' => $this->attributionModel->count(),
             'villes' => $this->villeModel->getAll(),
             'dons' => array_slice($this->donModel->getAll(), 0, 5),
-            'besoins' => array_slice($this->besoinModel->getAll(), 0, 5)
+            'besoins' => array_slice($this->besoinModel->getAll(), 0, 5),
+            'attributions' => array_slice($this->attributionModel->getAll(), 0, 5)
         ];
 
         $this->render('dashboard', $data);
@@ -163,9 +171,9 @@ class LayoutController {
      * Traiter les soumissions de formulaire (create/update)
      */
     public function saveVille() {
-        $id = Flight::request()->data('id');
-        $nom = Flight::request()->data('nom');
-        $region = Flight::request()->data('region');
+        $id = Flight::request()->data->id;
+        $nom = Flight::request()->data->nom;
+        $region = Flight::request()->data->region;
 
         if($id) {
             $this->villeModel->update($id, $nom, $region);
@@ -177,12 +185,12 @@ class LayoutController {
     }
 
     public function saveBesoin() {
-        $id = Flight::request()->data('id');
-        $idVille = Flight::request()->data('idVille');
-        $type = Flight::request()->data('type');
-        $designation = Flight::request()->data('designation');
-        $prixUnitaire = Flight::request()->data('prixUnitaire');
-        $quantite = Flight::request()->data('quantite');
+        $id = Flight::request()->data->id;
+        $idVille = Flight::request()->data->idVille;
+        $type = Flight::request()->data->type;
+        $designation = Flight::request()->data->designation;
+        $prixUnitaire = Flight::request()->data->prixUnitaire;
+        $quantite = Flight::request()->data->quantite;
         $dateSaisie = date('Y-m-d');
 
         if($id) {
@@ -195,20 +203,42 @@ class LayoutController {
     }
 
     public function saveDon() {
-        $id = Flight::request()->data('id');
-        $donateur = Flight::request()->data('donateur');
-        $type = Flight::request()->data('type');
-        $designation = Flight::request()->data('designation');
-        $montantUnitaire = Flight::request()->data('montantUnitaire');
-        $quantite = Flight::request()->data('quantite');
+        $id = Flight::request()->data->id;
+        $donateur = Flight::request()->data->donateur;
+        $type = Flight::request()->data->type;
+        $designation = Flight::request()->data->designation;
+        $montantUnitaire = Flight::request()->data->montantUnitaire;
+        $quantite = Flight::request()->data->quantite;
         $dateSaisie = date('Y-m-d');
 
         if($id) {
+            // Mise à jour d'un don existant
             $this->donModel->update($id, $donateur, $type, $designation, $montantUnitaire, $quantite, $dateSaisie);
-            Flight::redirect('/dons?msg=updated');
+            
+            // Redistribuer automatiquement
+            $resultat = $this->distributionService->redistribuerDon($id);
+            
+            if ($resultat['success']) {
+                Flight::redirect('/dons?msg=updated&distributed=1');
+            } else {
+                Flight::redirect('/dons?msg=error');
+            }
         } else {
-            $this->donModel->create($donateur, $type, $designation, $montantUnitaire, $quantite, $dateSaisie);
-            Flight::redirect('/dons?msg=created');
+            // Créer un nouveau don
+            $lastDonId = $this->donModel->create($donateur, $type, $designation, $montantUnitaire, $quantite, $dateSaisie);
+            
+            if ($lastDonId) {
+                // Distribuer automatiquement le don
+                $resultat = $this->distributionService->distribuerDon($lastDonId);
+                
+                if ($resultat['success']) {
+                    Flight::redirect('/dons?msg=created&distributed=1');
+                } else {
+                    Flight::redirect('/dons?msg=created');
+                }
+            } else {
+                Flight::redirect('/dons?msg=error');
+            }
         }
     }
 
@@ -228,6 +258,105 @@ class LayoutController {
     public function deleteDon($id) {
         $this->donModel->delete($id);
         Flight::redirect('/dons?msg=deleted');
+    }
+
+    /**
+     * Liste des attributions
+     */
+    public function listAttributions() {
+        $data = [
+            'pageTitle' => 'Gestion des Attributions',
+            'attributions' => $this->attributionModel->getAll()
+        ];
+
+        $this->render('attributions/list', $data);
+    }
+
+    /**
+     * Créer une attribution
+     */
+    public function createAttribution() {
+        $data = [
+            'pageTitle' => 'Ajouter une attribution',
+            'dons' => $this->donModel->getAll(),
+            'villes' => $this->villeModel->getAll()
+        ];
+
+        $this->render('attributions/form', $data);
+    }
+
+    /**
+     * Éditer une attribution
+     */
+    public function editAttribution($id) {
+        $data = [
+            'pageTitle' => 'Modifier une attribution',
+            'attribution' => $this->attributionModel->getById($id),
+            'dons' => $this->donModel->getAll(),
+            'villes' => $this->villeModel->getAll()
+        ];
+
+        $this->render('attributions/form', $data);
+    }
+
+    /**
+     * Sauvegarder une attribution
+     */
+    public function saveAttribution() {
+        $id = Flight::request()->data->id;
+        $idDons = Flight::request()->data->idDons;
+        $idVille = Flight::request()->data->idVille;
+        $designation = Flight::request()->data->designation;
+        $quantiteAttribuee = Flight::request()->data->quantiteAttribuee;
+        $dateAttribution = Flight::request()->data->dateAttribution;
+
+        if($id) {
+            $this->attributionModel->update($id, $idDons, $idVille, $designation, $quantiteAttribuee, $dateAttribution);
+            Flight::redirect('/attributions?msg=updated');
+        } else {
+            $this->attributionModel->create($idDons, $idVille, $designation, $quantiteAttribuee, $dateAttribution);
+            Flight::redirect('/attributions?msg=created');
+        }
+    }
+
+    /**
+     * Supprimer une attribution
+     */
+    public function deleteAttribution($id) {
+        $this->attributionModel->delete($id);
+        Flight::redirect('/attributions?msg=deleted');
+    }
+
+    /**
+     * Afficher le rapport de distribution d'un don
+     */
+    public function rapportDistribution($idDon) {
+        $rapport = $this->distributionService->obtenirRapportDistribution($idDon);
+        
+        if (!$rapport['don']) {
+            Flight::notFound();
+            return;
+        }
+
+        $data = [
+            'pageTitle' => 'Rapport de Distribution - ' . $rapport['don']['donateur'],
+            'rapport' => $rapport
+        ];
+
+        $this->render('rapports/distribution', $data);
+    }
+
+    /**
+     * Redistribuer un don
+     */
+    public function redistributre($idDon) {
+        $resultat = $this->distributionService->redistribuerDon($idDon);
+        
+        if ($resultat['success']) {
+            Flight::redirect('/dons/' . $idDon . '/rapport?msg=redistributed');
+        } else {
+            Flight::redirect('/dons/' . $idDon . '/rapport?msg=error');
+        }
     }
 }
 ?>

@@ -39,6 +39,7 @@
                 <td><?php echo $don['quantite']; ?></td>
                 <td><?php echo $don['dateSaisie']; ?></td>
                 <td>
+                    <a href="<?php echo Flight::get('flight.base_url'); ?>dons/<?php echo $don['id']; ?>/rapport" class="btn btn-sm btn-info" title="Voir le rapport de distribution">📊 Rapport</a>
                     <a href="<?php echo Flight::get('flight.base_url'); ?>dons/<?php echo $don['id']; ?>/edit" class="btn btn-sm btn-warning">✏️ Éditer</a>
                     <form method="POST" action="<?php echo Flight::get('flight.base_url'); ?>dons/<?php echo $don['id']; ?>/delete" style="display:inline;">
                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Êtes-vous sûr?')">🗑️ Supprimer</button>

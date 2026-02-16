@@ -98,6 +98,43 @@ $router->group('', function(Router $router) use ($app) {
 		$controller->deleteDon($id);
 	});
 
+	// Routes Attributions
+	$router->get('/attributions', function() {
+		$controller = new LayoutController();
+		$controller->listAttributions();
+	});
+
+	$router->get('/attributions/create', function() {
+		$controller = new LayoutController();
+		$controller->createAttribution();
+	});
+
+	$router->get('/attributions/@id/edit', function($id) {
+		$controller = new LayoutController();
+		$controller->editAttribution($id);
+	});
+
+	$router->post('/attributions/save', function() {
+		$controller = new LayoutController();
+		$controller->saveAttribution();
+	});
+
+	$router->post('/attributions/@id/delete', function($id) {
+		$controller = new LayoutController();
+		$controller->deleteAttribution($id);
+	});
+
+	// Routes Rapports
+	$router->get('/dons/@id/rapport', function($id) {
+		$controller = new LayoutController();
+		$controller->rapportDistribution($id);
+	});
+
+	$router->post('/dons/@id/redistribuer', function($id) {
+		$controller = new LayoutController();
+		$controller->redistributre($id);
+	});
+
 	// ========== Routes Anciennes (API & Produits) ==========
 
 	

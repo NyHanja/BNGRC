@@ -57,23 +57,20 @@ INSERT INTO bngrc_dons (donateur, type, designation, montantUnitaire, quantite, 
 ('Donateur Privé', 'argent', 'fonds secours', 1.00, 2000, '2026-02-13');
 
 -- 5️⃣ Table attributions
--- CREATE TABLE IF NOT EXISTS bngrc_attributions (
---     id INT AUTO_INCREMENT PRIMARY KEY,
---     idDons INT NOT NULL,
---     idVille INT NOT NULL,
---     designation VARCHAR(100) NOT NULL,
---     quantiteAttribuee INT NOT NULL,
---     dateAttribution DATE NOT NULL,
---     FOREIGN KEY (idDons) REFERENCES dons(id) ON DELETE CASCADE,
---     FOREIGN KEY (idVille) REFERENCES villes(id) ON DELETE CASCADE
--- );
-
--- <<<<<<< HEAD:public/assets/database/20260216-01-init.sql
--- -- Données exemples pour attributions
+CREATE TABLE IF NOT EXISTS bngrc_attributions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    idDons INT NOT NULL,
+    idVille INT NOT NULL,
+    designation VARCHAR(100) NOT NULL,
+    quantiteAttribuee INT NOT NULL,
+    dateAttribution DATE NOT NULL,
+    FOREIGN KEY (idDons) REFERENCES bngrc_dons(id) ON DELETE CASCADE,
+    FOREIGN KEY (idVille) REFERENCES bngrc_villes(id) ON DELETE CASCADE
+);
 
 -- Données exemples pour attributions
--- >>>>>>> dev:public/assets/database/database.sql
--- INSERT INTO attributions (idDons, idVille, designation, quantiteAttribuee, dateAttribution) VALUES
--- (1, 1, 'riz', 300, '2026-02-16'),
--- (2, 1, 'tôle', 50, '2026-02-16'),
--- (3, 2, 'fonds secours', 1000, '2026-02-16');
+
+INSERT INTO bngrc_attributions (idDons, idVille, designation, quantiteAttribuee, dateAttribution) VALUES
+(1, 1, 'riz', 300, '2026-02-16'),
+(2, 1, 'tôle', 50, '2026-02-16'),
+(3, 2, 'fonds secours', 1000, '2026-02-16');
