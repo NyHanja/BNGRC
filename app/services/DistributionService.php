@@ -315,9 +315,7 @@ class DistributionService {
             ORDER BY b.dateSaisie ASC
         ");
 
-        $stmt->bindParam(':type', $type);
-        $stmt->bindParam(':designation', $designation);
-        $stmt->execute();
+        $stmt->execute([':type' => $type, ':designation' => $designation]);
 
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
@@ -343,8 +341,7 @@ class DistributionService {
             ORDER BY v.nom ASC
         ");
 
-        $stmt->bindParam(':idDon', $idDon, PDO::PARAM_INT);
-        $stmt->execute();
+        $stmt->execute([':idDon' => $idDon]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -372,8 +369,7 @@ class DistributionService {
             // Supprimer les anciennes attributions en dehors de la transaction de distribution
             $this->db->beginTransaction();
             $stmt = $this->db->prepare("DELETE FROM bngrc_attributions WHERE idDons = :idDon");
-            $stmt->bindParam(':idDon', $idDon, PDO::PARAM_INT);
-            $stmt->execute();
+            $stmt->execute([':idDon' => $idDon]);
 
             // Nettoyer le stock argent lié si c'est un don d'argent
             $don = $this->donModel->getById($idDon);

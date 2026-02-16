@@ -65,8 +65,7 @@ class VilleModel {
      */
     public function getById($id) {
         $stmt = $this->db->prepare("SELECT * FROM bngrc_villes WHERE id = :id");
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
+        $stmt->execute([':id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
@@ -75,9 +74,10 @@ class VilleModel {
      */
     public function create($nom, $region) {
         $stmt = $this->db->prepare("INSERT INTO bngrc_villes (nom, region) VALUES (:nom, :region)");
-        $stmt->bindParam(':nom', $nom);
-        $stmt->bindParam(':region', $region);
-        return $stmt->execute();
+        return $stmt->execute([
+            ':nom' => $nom,
+            ':region' => $region
+        ]);
     }
 
     /**
@@ -85,10 +85,11 @@ class VilleModel {
      */
     public function update($id, $nom, $region) {
         $stmt = $this->db->prepare("UPDATE bngrc_villes SET nom = :nom, region = :region WHERE id = :id");
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->bindParam(':nom', $nom);
-        $stmt->bindParam(':region', $region);
-        return $stmt->execute();
+        return $stmt->execute([
+            ':id' => $id,
+            ':nom' => $nom,
+            ':region' => $region
+        ]);
     }
 
     /**
@@ -96,8 +97,7 @@ class VilleModel {
      */
     public function delete($id) {
         $stmt = $this->db->prepare("DELETE FROM bngrc_villes WHERE id = :id");
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        return $stmt->execute();
+        return $stmt->execute([':id' => $id]);
     }
 
     /**

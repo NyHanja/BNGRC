@@ -22,8 +22,7 @@ class DonModel {
      */
     public function getById($id) {
         $stmt = $this->db->prepare("SELECT * FROM bngrc_dons WHERE id = :id");
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
+        $stmt->execute([':id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
@@ -32,8 +31,7 @@ class DonModel {
      */
     public function getByType($type) {
         $stmt = $this->db->prepare("SELECT * FROM bngrc_dons WHERE type = :type ORDER BY dateSaisie DESC");
-        $stmt->bindParam(':type', $type);
-        $stmt->execute();
+        $stmt->execute([':type' => $type]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -43,13 +41,14 @@ class DonModel {
     public function create($donateur, $type, $designation, $montantUnitaire, $quantite, $dateSaisie) {
         $stmt = $this->db->prepare("INSERT INTO bngrc_dons (donateur, type, designation, montantUnitaire, quantite, dateSaisie) 
                                      VALUES (:donateur, :type, :designation, :montantUnitaire, :quantite, :dateSaisie)");
-        $stmt->bindParam(':donateur', $donateur);
-        $stmt->bindParam(':type', $type);
-        $stmt->bindParam(':designation', $designation);
-        $stmt->bindParam(':montantUnitaire', $montantUnitaire);
-        $stmt->bindParam(':quantite', $quantite, PDO::PARAM_INT);
-        $stmt->bindParam(':dateSaisie', $dateSaisie);
-        $result = $stmt->execute();
+        $result = $stmt->execute([
+            ':donateur' => $donateur,
+            ':type' => $type,
+            ':designation' => $designation,
+            ':montantUnitaire' => $montantUnitaire,
+            ':quantite' => $quantite,
+            ':dateSaisie' => $dateSaisie
+        ]);
         
         // Retourner l'ID du don inséré
         return $result ? $this->db->lastInsertId() : false;
@@ -61,14 +60,15 @@ class DonModel {
     public function update($id, $donateur, $type, $designation, $montantUnitaire, $quantite, $dateSaisie) {
         $stmt = $this->db->prepare("UPDATE bngrc_dons SET donateur = :donateur, type = :type, designation = :designation, 
                                     montantUnitaire = :montantUnitaire, quantite = :quantite, dateSaisie = :dateSaisie WHERE id = :id");
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->bindParam(':donateur', $donateur);
-        $stmt->bindParam(':type', $type);
-        $stmt->bindParam(':designation', $designation);
-        $stmt->bindParam(':montantUnitaire', $montantUnitaire);
-        $stmt->bindParam(':quantite', $quantite, PDO::PARAM_INT);
-        $stmt->bindParam(':dateSaisie', $dateSaisie);
-        return $stmt->execute();
+        return $stmt->execute([
+            ':id' => $id,
+            ':donateur' => $donateur,
+            ':type' => $type,
+            ':designation' => $designation,
+            ':montantUnitaire' => $montantUnitaire,
+            ':quantite' => $quantite,
+            ':dateSaisie' => $dateSaisie
+        ]);
     }
 
     /**
@@ -76,8 +76,7 @@ class DonModel {
      */
     public function delete($id) {
         $stmt = $this->db->prepare("DELETE FROM bngrc_dons WHERE id = :id");
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        return $stmt->execute();
+        return $stmt->execute([':id' => $id]);
     }
 
     /**

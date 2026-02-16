@@ -14,8 +14,7 @@ class StockArgentModel {
      */
     public function getByVille($idVille) {
         $stmt = $this->db->prepare("SELECT * FROM stockArgent WHERE idVille = :idVille");
-        $stmt->bindParam(':idVille', $idVille, PDO::PARAM_INT);
-        $stmt->execute();
+        $stmt->execute([':idVille' => $idVille]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
@@ -46,10 +45,10 @@ class StockArgentModel {
         }
 
         $stmt = $this->db->prepare("UPDATE stockArgent SET quantite = quantite - :montant WHERE idVille = :idVille");
-        $stmt->bindParam(':montant', $montant, PDO::PARAM_INT);
-        $stmt->bindParam(':idVille', $idVille, PDO::PARAM_INT);
-        
-        return $stmt->execute();
+        return $stmt->execute([
+            ':montant' => $montant,
+            ':idVille' => $idVille
+        ]);
     }
 
     /**
