@@ -30,7 +30,7 @@ function chargerDonnees() {
     btnRafraichir.disabled = true;
 
     // Requête AJAX
-    fetch('/api/recap')
+    fetch((window.BASE_URL || '/') + 'api/recap')
         .then(response => {
             if (!response.ok) {
                 throw new Error(`Erreur serveur: ${response.status}`);

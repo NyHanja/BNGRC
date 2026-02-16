@@ -58,7 +58,7 @@ function simulerDistribution() {
     }
 
     // Appel AJAX
-    fetch(`/api/simulation?besoinId=${besoinId}&quantite=${quantite}&frais=${frais / 100}`)
+    fetch(`${window.BASE_URL || '/'}api/simulation?besoinId=${besoinId}&quantite=${quantite}&frais=${frais / 100}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -101,7 +101,7 @@ function validerDistribution() {
     formData.append('quantite', dernierSimulation.simulation.quantiteAAttribuer);
     formData.append('montantNet', dernierSimulation.simulation.montantNet);
 
-    fetch('/api/simulation/valider', {
+    fetch((window.BASE_URL || '/') + 'api/simulation/valider', {
         method: 'POST',
         body: formData
     })
