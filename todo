@@ -1,0 +1,198 @@
+=========== VERSION 1 (V1) ===========
+
+
+1. BASE DE DONNÉES & CONFIGURATION  (Haren)
+
+    [ok] Création base de données MariaDB (bngrc)
+    [ok] Table bngrc_villes (id, nom, region)
+    [ok] Table bngrc_besoins (id, idVille, type, designation, prixUnitaire, quantite, dateSaisie)
+    [ok] Table bngrc_dons (id, donateur, type, designation, montantUnitaire, quantite, dateSaisie)
+    [ok] Table bngrc_attributions (id, idDons, idVille, designation, quantiteAttribuee, dateAttribution)
+    [ok] Vue SQL vue_besoins_non_satisfaits (besoins - attributions)
+    [ok] Configuration FlightPHP (bootstrap, config, routes, services)
+    [ok] Docker / Vagrant pour environnement de dev
+    [ok] Gestion du base_url sur tous les href/src/redirect
+
+
+2. MODÈLES PHP (Backend)  (Haren)
+
+    [ok] VilleModel     — CRUD + count()
+    [ok] BesoinModel    — CRUD + getByVille() + besoins non satisfaits
+    [ok] DonModel       — CRUD + getAll()
+    [ok] AttributionModel — CRUD + getByDon() + getRecap()
+    [ok] ProduitModel   — gestion des produits
+
+
+3. PAGES CRUD - VILLES  (Nekena)
+
+    [ok] Page liste des villes (villes/list.php)
+    [ok] Formulaire création/édition ville (villes/form.php)
+    [ok] Contrôleur : listVilles(), saveVille(), deleteVille()
+    [ok] Routes : GET /villes, GET /villes/create, GET /villes/@id/edit, POST /villes/save, GET /villes/@id/delete
+
+
+4. PAGES CRUD - BESOINS  (Nekena)
+
+    [ok] Page liste des besoins (besoins/list.php)
+    [ok] Formulaire création/édition besoin (besoins/form.php)
+    [ok] Sélection de la ville dans le formulaire
+    [ok] Choix du type (nature, matériaux, argent)
+    [ok] Contrôleur : listBesoins(), saveBesoin(), deleteBesoin()
+    [ok] Routes : GET /besoins, GET /besoins/create, GET /besoins/@id/edit, POST /besoins/save, GET /besoins/@id/delete
+
+
+5. PAGES CRUD - DONS  (Nekena)
+
+    [ok] Page liste des dons (dons/list.php)
+    [ok] Formulaire création/édition don (dons/form.php)
+    [ok] Choix du type (nature, matériaux, argent)
+    [ok] Forcer quantité=1 pour les dons argent
+    [ok] Contrôleur : listDons(), saveDon(), deleteDon()
+    [ok] Routes : GET /dons, GET /dons/create, GET /dons/@id/edit, POST /dons/save, GET /dons/@id/delete
+
+
+6. DISTRIBUTION AUTOMATIQUE DES DONS  (NyHanja)
+
+    [ok] DistributionService — logique de distribution
+    [ok] distribuerDon() — dispatch un don vers les villes ayant des besoins
+    [ok] redistribuerDon() — recalcul après modification d un don
+    [ok] Distribution par ordre de date et de saisie
+    [ok] Matching type + désignation pour nature/matériaux
+    [ok] Pour argent : matching par type uniquement (sans désignation)
+    [ok] Distribution automatique à la création/modification d un don
+    [ok] Intégration dans saveDon() du contrôleur
+
+
+7. PAGE ATTRIBUTIONS  (NyHanja)
+
+    [ok] Page liste des attributions (attributions/list.php)
+    [ok] Affichage : don, ville, désignation, quantité, date
+    [ok] Contrôleur : listAttributions()
+    [ok] Routes : GET /attributions
+
+
+8. PAGE TABLEAU DE BORD  (NyHanja)
+
+    [ok] Page dashboard (dashboard.php)
+    [ok] Liste des villes avec besoins par ville
+    [ok] Dons attribués à chaque ville
+    [ok] Statistiques globales (total villes, besoins, dons)
+    [ok] Contrôleur : dashboard()
+    [ok] Route : GET /
+
+
+9. RAPPORT DE DISTRIBUTION  (NyHanja)
+
+    [ok] Page rapport par don (rapports/distribution.php)
+    [ok] Détails de la distribution d un don
+    [ok] Bouton redistribuer
+    [ok] Contrôleur : rapportDistribution(), redistributre()
+    [ok] Routes : GET /dons/@id/rapport, POST /dons/@id/redistribuer
+
+
+10. DESIGN & LAYOUT  (Nekena)
+
+    [ok] Layout principal (layout.php) — header, sidebar, footer
+    [ok] CSS global (styles.css, layout.css)
+    [ok] Navigation header + sidebar avec liens actifs
+    [ok] JS layout (layout.js) — menu actif, déconnexion
+    [ok] Responsive / affichage propre
+    [ok] SecurityHeadersMiddleware (CSP, nonce)
+
+
+
+
+
+
+
+
+
+
+=========== VERSION 2 (V2) ===========
+
+
+11. STOCK ARGENT — Backend  (Haren)
+
+    [ok] Table stockArgent (id, idVille, quantite BIGINT)
+    [ok] Table repartitionArgent (id, montant, dateRepartition)
+    [ok] Table detailsRepartition (id, idRepartition, idVille, montantAvant, montantApres)
+    [ok] StockArgentModel — CRUD + getAll() + getByVille()
+    [ok] RepartitionArgentModel — historique des répartitions
+    [ok] Mise à jour vue SQL pour argent (CASE WHEN type=argent → repartitionArgent)
+
+
+12. DISTRIBUTION ARGENT — Logique métier  (Haren)
+
+    [ok] distribuerDonArgent() dans DistributionService
+    [ok] Répartition proportionnelle aux besoins argent par ville
+    [ok] Stockage du surplus dans stockArgent
+    [ok] redistribuerTousDonsArgent() — redistribution globale
+    [ok] Calcul correct : montantUnitaire seul (pas × quantite) pour argent
+    [ok] Gestion transactions DB (éviter nested transactions)
+
+
+13. PAGE STOCK ARGENT  (Haren)
+
+    [ok] Page stock-argent.php — liste du stock par ville
+    [ok] Affichage montant par ville
+    [ok] Bouton "Redistribuer tout" (formulaire POST)
+    [ok] Lien vers détails/historique par ville
+    [ok] Contrôleur : stockArgent(), redistribuerTousDonsArgent()
+    [ok] Routes : GET /stock-argent, POST /stock-argent/redistribuer-tout
+
+
+14. PAGE HISTORIQUE RÉPARTITIONS  (Haren)
+
+    [ok] Page repartition-historique.php
+    [ok] Historique des répartitions par ville
+    [ok] Détails : montant avant/après par ville
+    [ok] Contrôleur : repartitionHistorique()
+    [ok] Route : GET /stock-argent/@id/details
+
+
+15. PAGE SIMULATION — Achat via argent  (NyHanja)
+
+    [ok] Page simulation.php — interface de simulation d achat
+    [ok] Sélection du besoin à acheter (nature/matériaux)
+    [ok] Saisie de la quantité souhaitée
+    [ok] Frais d achat x% configurable
+    [ok] Utilisation du stockArgent de la ville pour TOUS les types de besoins
+    [ok] Bouton "Simuler" — affiche le résultat sans valider (AJAX)
+    [ok] Bouton "Valider" — dispatch réel des dons (AJAX)
+    [ok] Message d erreur si le besoin est déjà satisfait dans les dons restants
+    [ok] simulation.js — logique AJAX front-end
+    [ok] Contrôleur : simulation(), simulationApi(), validerSimulation()
+    [ok] Routes : GET /simulation, GET /api/simulation, POST /api/simulation/valider
+
+
+16. PAGE RÉCAPITULATION  (NyHanja)
+
+    [ok] Page recap.php — récapitulatif global
+    [ok] Besoins totaux en montant
+    [ok] Besoins satisfaits en montant
+    [ok] Montant des besoins restants
+    [ok] Bouton "Actualiser" en AJAX
+    [ok] recap.js — logique AJAX front-end
+    [ok] Contrôleur : recap(), recapApi()
+    [ok] Routes : GET /recap, GET /api/recap
+
+
+17. INTÉGRATION DANS LE LAYOUT  (Nekena)
+
+    [ok] Lien Stock Argent dans la sidebar
+    [ok] Lien Simulation dans la navigation
+    [ok] Lien Récapitulatif dans la navigation
+    [ok] Lien Rapports dans la sidebar
+    [ok] Gestion des liens actifs pour les nouvelles pages
+
+
+========================== LIVRAISON ==========================================
+
+
+18. DÉPLOIEMENT & LIVRAISON  (Haren + Nekena + NyHanja)
+
+    [] Todo list (ce fichier)
+    [] Déploiement sur le serveur ITU
+    [] Tests finaux sur le serveur
+    [] Vérification de toutes les fonctionnalités
+    [] Livraison finale

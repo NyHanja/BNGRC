@@ -34,8 +34,7 @@ class AttributionModel {
                                    LEFT JOIN bngrc_dons d ON a.idDons = d.id 
                                    LEFT JOIN bngrc_villes v ON a.idVille = v.id 
                                    WHERE a.id = :id");
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
+        $stmt->execute([':id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
@@ -48,8 +47,7 @@ class AttributionModel {
                                      LEFT JOIN bngrc_villes v ON a.idVille = v.id 
                                      WHERE a.idDons = :idDons 
                                      ORDER BY a.dateAttribution DESC");
-        $stmt->bindParam(':idDons', $idDons, PDO::PARAM_INT);
-        $stmt->execute();
+        $stmt->execute([':idDons' => $idDons]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -62,8 +60,7 @@ class AttributionModel {
                                      LEFT JOIN bngrc_dons d ON a.idDons = d.id 
                                      WHERE a.idVille = :idVille 
                                      ORDER BY a.dateAttribution DESC");
-        $stmt->bindParam(':idVille', $idVille, PDO::PARAM_INT);
-        $stmt->execute();
+        $stmt->execute([':idVille' => $idVille]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -73,12 +70,13 @@ class AttributionModel {
     public function create($idDons, $idVille, $designation, $quantiteAttribuee, $dateAttribution) {
         $stmt = $this->db->prepare("INSERT INTO bngrc_attributions (idDons, idVille, designation, quantiteAttribuee, dateAttribution) 
                                      VALUES (:idDons, :idVille, :designation, :quantiteAttribuee, :dateAttribution)");
-        $stmt->bindParam(':idDons', $idDons, PDO::PARAM_INT);
-        $stmt->bindParam(':idVille', $idVille, PDO::PARAM_INT);
-        $stmt->bindParam(':designation', $designation);
-        $stmt->bindParam(':quantiteAttribuee', $quantiteAttribuee, PDO::PARAM_INT);
-        $stmt->bindParam(':dateAttribution', $dateAttribution);
-        return $stmt->execute();
+        return $stmt->execute([
+            ':idDons' => $idDons,
+            ':idVille' => $idVille,
+            ':designation' => $designation,
+            ':quantiteAttribuee' => $quantiteAttribuee,
+            ':dateAttribution' => $dateAttribution
+        ]);
     }
 
     /**
@@ -89,13 +87,14 @@ class AttributionModel {
                                     SET idDons = :idDons, idVille = :idVille, designation = :designation, 
                                         quantiteAttribuee = :quantiteAttribuee, dateAttribution = :dateAttribution 
                                     WHERE id = :id");
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->bindParam(':idDons', $idDons, PDO::PARAM_INT);
-        $stmt->bindParam(':idVille', $idVille, PDO::PARAM_INT);
-        $stmt->bindParam(':designation', $designation);
-        $stmt->bindParam(':quantiteAttribuee', $quantiteAttribuee, PDO::PARAM_INT);
-        $stmt->bindParam(':dateAttribution', $dateAttribution);
-        return $stmt->execute();
+        return $stmt->execute([
+            ':id' => $id,
+            ':idDons' => $idDons,
+            ':idVille' => $idVille,
+            ':designation' => $designation,
+            ':quantiteAttribuee' => $quantiteAttribuee,
+            ':dateAttribution' => $dateAttribution
+        ]);
     }
 
     /**
@@ -103,8 +102,7 @@ class AttributionModel {
      */
     public function delete($id) {
         $stmt = $this->db->prepare("DELETE FROM bngrc_attributions WHERE id = :id");
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        return $stmt->execute();
+        return $stmt->execute([':id' => $id]);
     }
 
     /**
