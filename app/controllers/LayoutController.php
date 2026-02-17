@@ -228,28 +228,13 @@ class LayoutController {
         if($id) {
             // Mise à jour d'un don existant
             $this->donModel->update($id, $donateur, $type, $designation, $montantUnitaire, $quantite, $dateSaisie);
-            
-            // Redistribuer automatiquement
-            $resultat = $this->distributionService->redistribuerDon($id);
-            
-            if ($resultat['success']) {
-                Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=updated&distributed=1');
-            } else {
-                Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=error');
-            }
+            Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=updated');
         } else {
-            // Créer un nouveau don (sans idVille, sera spécifiée lors de l'attribution)
+            // Créer un nouveau don (non dispatché, l'utilisateur devra cliquer sur Dispatch)
             $lastDonId = $this->donModel->create($donateur, $type, $designation, $montantUnitaire, $quantite, $dateSaisie);
             
             if ($lastDonId) {
-                // Distribuer automatiquement le don
-                $resultat = $this->distributionService->distribuerDon($lastDonId);
-                
-                if ($resultat['success']) {
-                    Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=created&distributed=1');
-                } else {
-                    Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=created');
-                }
+                Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=created');
             } else {
                 Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=error');
             }
@@ -613,6 +598,58 @@ class LayoutController {
             Flight::redirect(Flight::get('flight.base_url') . 'stock-argent?msg=redistributed');
         } else {
             Flight::redirect(Flight::get('flight.base_url') . 'stock-argent?msg=error&detail=' . urlencode($resultat['message']));
+        }
+    }
+
+    /**
+     * Dispatcher TOUS les dons (par date ancienne = besoin le plus ancien en premier)
+     */
+    public function dispatchTous() {
+        $resultat = $this->distributionService->dispatcherTous();
+        
+        if ($resultat['success']) {
+            Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=dispatched&detail=' . urlencode($resultat['message']));
+        } else {
+            Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=dispatch_error&detail=' . urlencode($resultat['message']));
+        }
+    }
+
+    /**
+     * Dispatcher TOUS les dons (plus petit besoin en premier)
+     */
+    public function dispatchTousPlusPetit() {
+        $resultat = $this->distributionService->dispatcherTousPlusPetit();
+        
+        if ($resultat['success']) {
+            Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=dispatched&detail=' . urlencode($resultat['message']));
+        } else {
+            Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=dispatch_error&detail=' . urlencode($resultat['message']));
+        }
+    }
+
+    /**
+     * Dispatcher TOUS les dons (proportionnalité, arrondi en bas, reste conservé)
+     */
+    public function dispatchTousProportionnel() {
+        $resultat = $this->distributionService->dispatcherTousProportionnel();
+        
+        if ($resultat['success']) {
+            Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=dispatched&detail=' . urlencode($resultat['message']));
+        } else {
+            Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=dispatch_error&detail=' . urlencode($resultat['message']));
+        }
+    }
+
+    /**
+     * Annuler TOUS les dispatches
+     */
+    public function annulerTousDispatches() {
+        $resultat = $this->distributionService->annulerTousDispatches();
+        
+        if ($resultat['success']) {
+            Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=undispatched');
+        } else {
+            Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=undispatch_error&detail=' . urlencode($resultat['message']));
         }
     }
 

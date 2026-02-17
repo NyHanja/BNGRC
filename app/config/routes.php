@@ -98,6 +98,27 @@ $router->group('', function(Router $router) use ($app) {
 		$controller->deleteDon($id);
 	});
 
+	// Routes Dispatch Global
+	$router->post('/dons/dispatch-tous', function() {
+		$controller = new LayoutController();
+		$controller->dispatchTous();
+	});
+
+	$router->post('/dons/dispatch-plus-petit', function() {
+		$controller = new LayoutController();
+		$controller->dispatchTousPlusPetit();
+	});
+
+	$router->post('/dons/dispatch-proportionnel', function() {
+		$controller = new LayoutController();
+		$controller->dispatchTousProportionnel();
+	});
+
+	$router->post('/dons/annuler-tous-dispatches', function() {
+		$controller = new LayoutController();
+		$controller->annulerTousDispatches();
+	});
+
 	// Routes Attributions
 	$router->get('/attributions', function() {
 		$controller = new LayoutController();
