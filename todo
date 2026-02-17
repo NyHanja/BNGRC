@@ -196,3 +196,129 @@
     [] Tests finaux sur le serveur
     [] Vérification de toutes les fonctionnalités
     [] Livraison finale
+
+
+
+
+=========== VERSION 3 (V3) — DISPATCH MANUEL & ANNULATION ===========
+
+
+19. BASE DE DONNÉES — Colonnes dispatch & stock  (Harena)
+
+    [ok] Ajout colonne `dispatched` TINYINT(1) DEFAULT 0 dans bngrc_dons
+    [ok] Ajout colonne `stock` INT DEFAULT 0 dans bngrc_dons
+    [ok] Script migration SQL (20260217-02-stock-dons.sql)
+    [ok] Rendre idDons NULLABLE dans bngrc_attributions (pour attributions depuis stock)
+
+
+20. MODÈLE DonModel — Méthodes dispatch & stock  (Harena)
+
+    [ok] markDispatched($id) — marquer un don comme dispatché
+    [ok] markUndispatched($id) — remettre un don en attente
+    [ok] isDispatched($id) — vérifier si un don est déjà dispatché
+    [ok] getStock($id) — lire le stock restant d un don
+    [ok] setStock($id, $quantite) — mettre à jour le stock d un don
+    [ok] getDonsAvecStock() — liste des dons ayant du stock > 0
+    [ok] resetAllStock() — remettre tous les stocks à 0 (pour annulation)
+
+
+21. DISPATCH MODE 1 — Besoin le plus ancien d abord  (NyHanja)
+
+    [ok] distribuerDonClassique($idDon) — nature/matériaux, par ordre de date
+    [ok] distribuerDonArgent($idDon) — argent, par ordre de date
+    [ok] Matching type + désignation pour classique
+    [ok] Matching type uniquement pour argent
+    [ok] Écriture dans bngrc_attributions
+    [ok] Écriture dans stockArgent + repartitionArgent pour argent
+    [ok] Gestion du stock restant (don.stock) si le don n est pas entièrement distribué
+    [ok] dispatcherTous() — boucle sur tous les dons non dispatchés (mode ancien)
+
+
+22. DISPATCH MODE 2 — Plus petit besoin d abord  (NyHanja)
+
+    [ok] obtenirBesoinsNonSatisfaitsPlusPetit($type, $designation) — tri ASC par quantité
+    [ok] obtenirBesoinsArgentNonSatisfaitsPlusPetit() — tri ASC par montant
+    [ok] distribuerDonClassiquePlusPetit($idDon) — satisfaire les petits besoins d abord
+    [ok] distribuerDonArgentPlusPetit($idDon) — argent, petits besoins d abord
+    [ok] Écriture dans bngrc_attributions
+    [ok] Écriture dans stockArgent + repartitionArgent pour argent
+    [ok] dispatcherTousPlusPetit() — boucle sur tous les dons (mode plus petit)
+
+
+23. DISPATCH MODE 3 — Proportionnel (plus grand reste)  (Harena)
+
+    [ok] distribuerDonClassiqueProportionnel($idDon) — répartition proportionnelle nature/matériaux
+    [ok] distribuerDonArgentProportionnel($idDon) — répartition proportionnelle argent
+    [ok] Algorithme du plus grand reste (largest remainder method) :
+        — Calcul part exacte : don × besoinVille / totalBesoins
+        — Plancher (floor) pour chaque ville
+        — Tri des villes par partie fractionnaire décroissante
+        — Distribution +1 aux villes ayant le plus grand reste décimal
+    [ok] Écriture dans bngrc_attributions
+    [ok] Écriture dans stockArgent + repartitionArgent pour argent
+    [ok] dispatcherTousProportionnel() — boucle sur tous les dons (mode proportionnel)
+
+
+24. DISTRIBUTION DEPUIS LE STOCK  (Harena)
+
+    [ok] distribuerDepuisStock($mode) — redistribue le stock restant des dons
+    [ok] distribuerStockClassique($idDon, $type, $designation, $quantite, $mode)
+        — Supporte les 3 modes (ancien, plus_petit, proportionnel)
+        — Largest remainder pour le mode proportionnel
+    [ok] distribuerStockArgent($idDon, $designation, $quantite, $mode)
+        — Supporte les 3 modes
+        — Largest remainder pour le mode proportionnel
+        — Écriture dans repartitionArgent + stockArgent + attributions
+    [ok] Appel automatique de distribuerDepuisStock() après chaque dispatch global
+
+
+25. ANNULATION DES DISPATCHES — Retour des dons aux donateurs  (NyHanja)
+
+    [ok] annulerTousDispatches() dans DistributionService :
+        — Suppression de toutes les attributions (TRUNCATE bngrc_attributions)
+        — Remise à zéro de stockArgent (TRUNCATE stockArgent)
+        — Remise à zéro de repartitionArgent + detailsRepartition
+        — Remise de tous les dons en statut non dispatché (dispatched = 0)
+        — Remise de tous les stocks à 0 (stock = 0)
+    [ok] Contrôleur annulerTousDispatches() dans LayoutController
+    [ok] Route POST /dons/annuler-tous-dispatches
+
+
+26. CONTRÔLEUR — Routes dispatch  (Nekena)
+
+    [ok] dispatchTous() — appelle dispatcherTous() et redirige avec message
+    [ok] dispatchTousPlusPetit() — appelle dispatcherTousPlusPetit()
+    [ok] dispatchTousProportionnel() — appelle dispatcherTousProportionnel()
+    [ok] annulerTousDispatches() — appelle annulerTousDispatches()
+    [ok] Route POST /dons/dispatch-tous
+    [ok] Route POST /dons/dispatch-plus-petit
+    [ok] Route POST /dons/dispatch-proportionnel
+    [ok] Route POST /dons/annuler-tous-dispatches
+    [ok] Gestion des messages de succès/erreur via ?msg= et ?detail=
+
+
+27. VUE LISTE DES DONS — Interface dispatch  (Nekena)
+
+    [ok] Barre de dispatch avec 4 boutons :
+        — 🚀 Dispatcher (ancien)
+        — 📊 Dispatcher (plus petit)
+        — ⚖️ Dispatcher (proportionnel)
+        — ↩️ Annuler tous
+    [ok] Colonne "Statut" avec badge dispatché/en attente
+    [ok] Colonne "Stock" avec badge violet pour stock > 0
+    [ok] Boutons d action compacts (Rapport, Éditer, Supprimer)
+    [ok] Confirmation JavaScript avant suppression et annulation
+    [ok] Affichage des messages de succès/erreur après action
+    [ok] Formatage dates (dd/mm/YYYY) et montants (séparateur milliers)
+
+
+28. CSS & DESIGN — Page dons  (Nekena)
+
+    [ok] Badge .badge-dispatched (vert avec bordure)
+    [ok] Badge .badge-pending (jaune avec bordure)
+    [ok] Badge .badge-stock (violet pour stock)
+    [ok] Badges type améliorés (.badge-nature, .badge-materiaux, .badge-argent)
+    [ok] Barre dispatch-actions avec dégradé et ombres
+    [ok] Table .dons-table avec en-tête dégradé sombre
+    [ok] Classes utilitaires (.td-donateur, .td-montant, .td-date, .td-actions)
+    [ok] Hover et zebra-striping améliorés sur les lignes

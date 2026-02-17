@@ -40,10 +40,18 @@ $router->group('', function(Router $router) use ($app) {
 		$controller = new LayoutController();
 		$controller->saveVille();
 	});
+	$router->get('/villes/save', function() {
+		$controller = new LayoutController();
+		$controller->listVilles();
+	});
 
 	$router->post('/villes/@id/delete', function($id) {
 		$controller = new LayoutController();
 		$controller->deleteVille($id);
+	});
+	$router->get('/villes/@id/delete', function($id) {
+		$controller = new LayoutController();
+		$controller->listVilles();
 	});
 
 	// Routes Besoins
@@ -66,10 +74,18 @@ $router->group('', function(Router $router) use ($app) {
 		$controller = new LayoutController();
 		$controller->saveBesoin();
 	});
+	$router->get('/besoins/save', function() {
+		$controller = new LayoutController();
+		$controller->listBesoins();
+	});
 
 	$router->post('/besoins/@id/delete', function($id) {
 		$controller = new LayoutController();
 		$controller->deleteBesoin($id);
+	});
+	$router->get('/besoins/@id/delete', function($id) {
+		$controller = new LayoutController();
+		$controller->listBesoins();
 	});
 
 	// Routes Dons
@@ -92,10 +108,55 @@ $router->group('', function(Router $router) use ($app) {
 		$controller = new LayoutController();
 		$controller->saveDon();
 	});
+	$router->get('/dons/save', function() {
+		$controller = new LayoutController();
+		$controller->listDons();
+	});
 
 	$router->post('/dons/@id/delete', function($id) {
 		$controller = new LayoutController();
 		$controller->deleteDon($id);
+	});
+	$router->get('/dons/@id/delete', function($id) {
+		$controller = new LayoutController();
+		$controller->listDons();
+	});
+
+	// Routes Dispatch Global
+	$router->post('/dons/dispatch-tous', function() {
+		$controller = new LayoutController();
+		$controller->dispatchTous();
+	});
+	$router->get('/dons/dispatch-tous', function() {
+		$controller = new LayoutController();
+		$controller->listDons();
+	});
+
+	$router->post('/dons/dispatch-plus-petit', function() {
+		$controller = new LayoutController();
+		$controller->dispatchTousPlusPetit();
+	});
+	$router->get('/dons/dispatch-plus-petit', function() {
+		$controller = new LayoutController();
+		$controller->listDons();
+	});
+
+	$router->post('/dons/dispatch-proportionnel', function() {
+		$controller = new LayoutController();
+		$controller->dispatchTousProportionnel();
+	});
+	$router->get('/dons/dispatch-proportionnel', function() {
+		$controller = new LayoutController();
+		$controller->listDons();
+	});
+
+	$router->post('/dons/annuler-tous-dispatches', function() {
+		$controller = new LayoutController();
+		$controller->annulerTousDispatches();
+	});
+	$router->get('/dons/annuler-tous-dispatches', function() {
+		$controller = new LayoutController();
+		$controller->listDons();
 	});
 
 	// Routes Attributions
@@ -118,10 +179,18 @@ $router->group('', function(Router $router) use ($app) {
 		$controller = new LayoutController();
 		$controller->saveAttribution();
 	});
+	$router->get('/attributions/save', function() {
+		$controller = new LayoutController();
+		$controller->listAttributions();
+	});
 
 	$router->post('/attributions/@id/delete', function($id) {
 		$controller = new LayoutController();
 		$controller->deleteAttribution($id);
+	});
+	$router->get('/attributions/@id/delete', function($id) {
+		$controller = new LayoutController();
+		$controller->listAttributions();
 	});
 
 	// Routes Rapports
@@ -133,6 +202,10 @@ $router->group('', function(Router $router) use ($app) {
 	$router->post('/dons/@id/redistribuer', function($id) {
 		$controller = new LayoutController();
 		$controller->redistributre($id);
+	});
+	$router->get('/dons/@id/redistribuer', function($id) {
+		$controller = new LayoutController();
+		$controller->rapportDistribution($id);
 	});
 
 	// ========== Routes Anciennes (API & Produits) ==========
@@ -170,6 +243,10 @@ $router->group('', function(Router $router) use ($app) {
 	$router->post('/stock-argent/redistribuer-tout', function() {
 		$controller = new LayoutController();
 		$controller->redistribuerTousDonsArgent();
+	});
+	$router->get('/stock-argent/redistribuer-tout', function() {
+		$controller = new LayoutController();
+		$controller->listStockArgent();
 	});
 
 	$router->get('/stock-argent/repartition-historique', function() {

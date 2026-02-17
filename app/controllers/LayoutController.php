@@ -185,11 +185,12 @@ class LayoutController {
 
         if($id) {
             $this->villeModel->update($id, $nom, $region);
-            Flight::redirect(Flight::get('flight.base_url') . 'villes?msg=updated');
+            $_GET['msg'] = 'updated';
         } else {
             $this->villeModel->create($nom, $region);
-            Flight::redirect(Flight::get('flight.base_url') . 'villes?msg=created');
+            $_GET['msg'] = 'created';
         }
+        $this->listVilles();
     }
 
     public function saveBesoin() {
@@ -203,11 +204,12 @@ class LayoutController {
 
         if($id) {
             $this->besoinModel->update($id, $idVille, $type, $designation, $prixUnitaire, $quantite, $dateSaisie);
-            Flight::redirect(Flight::get('flight.base_url') . 'besoins?msg=updated');
+            $_GET['msg'] = 'updated';
         } else {
             $this->besoinModel->create($idVille, $type, $designation, $prixUnitaire, $quantite, $dateSaisie);
-            Flight::redirect(Flight::get('flight.base_url') . 'besoins?msg=created');
+            $_GET['msg'] = 'created';
         }
+        $this->listBesoins();
     }
 
     public function saveDon() {
@@ -228,32 +230,18 @@ class LayoutController {
         if($id) {
             // Mise à jour d'un don existant
             $this->donModel->update($id, $donateur, $type, $designation, $montantUnitaire, $quantite, $dateSaisie);
-            
-            // Redistribuer automatiquement
-            $resultat = $this->distributionService->redistribuerDon($id);
-            
-            if ($resultat['success']) {
-                Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=updated&distributed=1');
-            } else {
-                Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=error');
-            }
+            $_GET['msg'] = 'updated';
         } else {
-            // Créer un nouveau don (sans idVille, sera spécifiée lors de l'attribution)
+            // Créer un nouveau don (non dispatché, l'utilisateur devra cliquer sur Dispatch)
             $lastDonId = $this->donModel->create($donateur, $type, $designation, $montantUnitaire, $quantite, $dateSaisie);
             
             if ($lastDonId) {
-                // Distribuer automatiquement le don
-                $resultat = $this->distributionService->distribuerDon($lastDonId);
-                
-                if ($resultat['success']) {
-                    Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=created&distributed=1');
-                } else {
-                    Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=created');
-                }
+                $_GET['msg'] = 'created';
             } else {
-                Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=error');
+                $_GET['msg'] = 'error';
             }
         }
+        $this->listDons();
     }
 
     /**
@@ -261,17 +249,20 @@ class LayoutController {
      */
     public function deleteVille($id) {
         $this->villeModel->delete($id);
-        Flight::redirect(Flight::get('flight.base_url') . 'villes?msg=deleted');
+        $_GET['msg'] = 'deleted';
+        $this->listVilles();
     }
 
     public function deleteBesoin($id) {
         $this->besoinModel->delete($id);
-        Flight::redirect(Flight::get('flight.base_url') . 'besoins?msg=deleted');
+        $_GET['msg'] = 'deleted';
+        $this->listBesoins();
     }
 
     public function deleteDon($id) {
         $this->donModel->delete($id);
-        Flight::redirect(Flight::get('flight.base_url') . 'dons?msg=deleted');
+        $_GET['msg'] = 'deleted';
+        $this->listDons();
     }
 
     /**
@@ -326,11 +317,12 @@ class LayoutController {
 
         if($id) {
             $this->attributionModel->update($id, $idDons, $idVille, $designation, $quantiteAttribuee, $dateAttribution);
-            Flight::redirect(Flight::get('flight.base_url') . 'attributions?msg=updated');
+            $_GET['msg'] = 'updated';
         } else {
             $this->attributionModel->create($idDons, $idVille, $designation, $quantiteAttribuee, $dateAttribution);
-            Flight::redirect(Flight::get('flight.base_url') . 'attributions?msg=created');
+            $_GET['msg'] = 'created';
         }
+        $this->listAttributions();
     }
 
     /**
@@ -338,7 +330,8 @@ class LayoutController {
      */
     public function deleteAttribution($id) {
         $this->attributionModel->delete($id);
-        Flight::redirect(Flight::get('flight.base_url') . 'attributions?msg=deleted');
+        $_GET['msg'] = 'deleted';
+        $this->listAttributions();
     }
 
     /**
@@ -367,10 +360,11 @@ class LayoutController {
         $resultat = $this->distributionService->redistribuerDon($idDon);
         
         if ($resultat['success']) {
-            Flight::redirect(Flight::get('flight.base_url') . 'dons/' . $idDon . '/rapport?msg=redistributed');
+            $_GET['msg'] = 'redistributed';
         } else {
-            Flight::redirect(Flight::get('flight.base_url') . 'dons/' . $idDon . '/rapport?msg=error');
+            $_GET['msg'] = 'error';
         }
+        $this->rapportDistribution($idDon);
     }
     public function recap() {
         $besoinsNonSatisfaits = $this->attributionModel->getRecap();
@@ -569,9 +563,9 @@ class LayoutController {
                 $this->stockArgentModel->deduire($villeId, $montantNet);
             }
             
-            // Créer l'attribution
+            // Créer l'attribution (pas de don associé → idDons = NULL)
             $this->attributionModel->create(
-                $besoincible['idBesoin'],
+                null,
                 $villeId,
                 $besoincible['designationBesoin'],
                 $quantiteAAttribuer,
@@ -610,10 +604,75 @@ class LayoutController {
         $resultat = $this->distributionService->redistribuerTousDonsArgent();
         
         if ($resultat['success']) {
-            Flight::redirect(Flight::get('flight.base_url') . 'stock-argent?msg=redistributed');
+            $_GET['msg'] = 'redistributed';
         } else {
-            Flight::redirect(Flight::get('flight.base_url') . 'stock-argent?msg=error&detail=' . urlencode($resultat['message']));
+            $_GET['msg'] = 'error';
+            $_GET['detail'] = $resultat['message'];
         }
+        $this->listStockArgent();
+    }
+
+    /**
+     * Dispatcher TOUS les dons (par date ancienne = besoin le plus ancien en premier)
+     */
+    public function dispatchTous() {
+        $resultat = $this->distributionService->dispatcherTous();
+        
+        if ($resultat['success']) {
+            $_GET['msg'] = 'dispatched';
+            $_GET['detail'] = $resultat['message'];
+        } else {
+            $_GET['msg'] = 'dispatch_error';
+            $_GET['detail'] = $resultat['message'];
+        }
+        $this->listDons();
+    }
+
+    /**
+     * Dispatcher TOUS les dons (plus petit besoin en premier)
+     */
+    public function dispatchTousPlusPetit() {
+        $resultat = $this->distributionService->dispatcherTousPlusPetit();
+        
+        if ($resultat['success']) {
+            $_GET['msg'] = 'dispatched';
+            $_GET['detail'] = $resultat['message'];
+        } else {
+            $_GET['msg'] = 'dispatch_error';
+            $_GET['detail'] = $resultat['message'];
+        }
+        $this->listDons();
+    }
+
+    /**
+     * Dispatcher TOUS les dons (proportionnalité, arrondi en bas, reste conservé)
+     */
+    public function dispatchTousProportionnel() {
+        $resultat = $this->distributionService->dispatcherTousProportionnel();
+        
+        if ($resultat['success']) {
+            $_GET['msg'] = 'dispatched';
+            $_GET['detail'] = $resultat['message'];
+        } else {
+            $_GET['msg'] = 'dispatch_error';
+            $_GET['detail'] = $resultat['message'];
+        }
+        $this->listDons();
+    }
+
+    /**
+     * Annuler TOUS les dispatches
+     */
+    public function annulerTousDispatches() {
+        $resultat = $this->distributionService->annulerTousDispatches();
+        
+        if ($resultat['success']) {
+            $_GET['msg'] = 'undispatched';
+        } else {
+            $_GET['msg'] = 'undispatch_error';
+            $_GET['detail'] = $resultat['message'];
+        }
+        $this->listDons();
     }
 
     /**
