@@ -15,3 +15,5 @@ CREATE TABLE IF NOT EXISTS bngrc_stock_dons (
 
 -- Permettre les attributions depuis le stock (sans idDon spécifique)
 ALTER TABLE bngrc_attributions MODIFY idDons INT NULL;
+
+UPDATE bngrc_dons SET stock = 0;

@@ -113,5 +113,38 @@ class DonModel {
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result && $result['dispatched'] == 1;
     }
+
+    /**
+     * Obtenir le stock restant d'un don
+     */
+    public function getStock($id) {
+        $stmt = $this->db->prepare("SELECT stock FROM bngrc_dons WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? (int)$result['stock'] : 0;
+    }
+
+    /**
+     * Mettre à jour le stock d'un don
+     */
+    public function setStock($id, $quantite) {
+        $stmt = $this->db->prepare("UPDATE bngrc_dons SET stock = :stock WHERE id = :id");
+        return $stmt->execute([':stock' => (int)$quantite, ':id' => $id]);
+    }
+
+    /**
+     * Récupérer tous les dons qui ont du stock > 0
+     */
+    public function getDonsAvecStock() {
+        $stmt = $this->db->query("SELECT * FROM bngrc_dons WHERE stock > 0 ORDER BY dateSaisie ASC");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Remettre le stock de tous les dons à 0
+     */
+    public function resetAllStock() {
+        return $this->db->exec("UPDATE bngrc_dons SET stock = 0");
+    }
 }
 ?>

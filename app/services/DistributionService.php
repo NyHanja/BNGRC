@@ -6,7 +6,6 @@ use app\models\VilleModel;
 use app\models\AttributionModel;
 use app\models\StockArgentModel;
 use app\models\RepartitionArgentModel;
-use app\models\StockDonModel;
 use PDO;
 
 class DistributionService {
@@ -17,7 +16,6 @@ class DistributionService {
     private $attributionModel;
     private $stockArgentModel;
     private $repartitionArgentModel;
-    private $stockDonModel;
 
     public function __construct($db) {
         $this->db = $db;
@@ -27,7 +25,6 @@ class DistributionService {
         $this->attributionModel = new AttributionModel($db);
         $this->stockArgentModel = new StockArgentModel($db);
         $this->repartitionArgentModel = new RepartitionArgentModel($db);
-        $this->stockDonModel = new StockDonModel($db);
     }
 
     public function distribuerDon($idDon) {
@@ -82,13 +79,11 @@ class DistributionService {
             $don = $this->donModel->getById($idDon);
             $montantDon = (int)$don['montantUnitaire'];
             $designation = $don['designation'];
+            $dateAttribution = date('Y-m-d');
 
-            // 0️⃣ Utiliser le stock existant d'abord
-            $stockExistant = $this->stockDonModel->getQuantite('argent', $designation);
+            // 0️⃣ Utiliser le stock existant de CE don d'abord
+            $stockExistant = (int)$don['stock'];
             $montantRestant = $montantDon + $stockExistant;
-            if ($stockExistant > 0) {
-                $this->stockDonModel->deduire('argent', $designation, $stockExistant);
-            }
             
             // 1️⃣ Trouver les besoins d'argent non satisfaits
             $besoinsArgent = $this->obtenirBesoinsArgentNonSatisfaits();
@@ -103,10 +98,23 @@ class DistributionService {
                 $montantNecessaire = (int)$besoin['montant'];
                 $montantAlloue = min($montantRestant, $montantNecessaire);
 
+                // Enregistrer dans repartitionArgent + detailsRepartition
                 $this->repartitionArgentModel->creerRepartition(
                     $idBesoin,
                     $montantAlloue,
                     [$idVille => $montantAlloue]
+                );
+
+                // Enregistrer dans stockArgent par ville
+                $this->stockArgentModel->ajouter($idVille, $montantAlloue);
+
+                // Enregistrer dans bngrc_attributions
+                $this->attributionModel->create(
+                    $idDon,
+                    $idVille,
+                    $designation,
+                    $montantAlloue,
+                    $dateAttribution
                 );
 
                 $distribution[] = [
@@ -119,10 +127,8 @@ class DistributionService {
                 $montantRestant -= $montantAlloue;
             }
 
-            // 3️⃣ S'il reste de l'argent → stocker dans bngrc_stock_dons
-            if ($montantRestant > 0) {
-                $this->stockDonModel->ajouter('argent', $designation, $montantRestant);
-            }
+            // 3️⃣ Mettre à jour le stock du don
+            $this->donModel->setStock($idDon, $montantRestant);
 
             $this->db->commit();
 
@@ -132,7 +138,7 @@ class DistributionService {
                 'distribution' => $distribution,
                 'montantTotal' => $montantDon,
                 'montantRestant' => $montantRestant,
-                'message' => 'Distribution argent réussie.' . ($montantRestant > 0 ? ' ' . $montantRestant . ' Ar stocké(s).' : '')
+                'message' => 'Distribution argent réussie.' . ($montantRestant > 0 ? ' ' . $montantRestant . ' Ar stocké(s) dans le don.' : '')
             ];
 
         } catch (\Exception $e) {
@@ -154,14 +160,10 @@ class DistributionService {
             $dateAttribution = date('Y-m-d');
             $distribution = [];
 
-            // 0️⃣ Utiliser le stock existant d'abord
-            $stockExistant = $this->stockDonModel->getQuantite($type, $designation);
+            // 0️⃣ Utiliser le stock existant de CE don d'abord
+            $stockExistant = (int)$don['stock'];
             $quantiteRestante = (int)$don['quantite'] + $stockExistant;
-            if ($stockExistant > 0) {
-                $this->stockDonModel->deduire($type, $designation, $stockExistant);
-            }
 
-            // Si quantité totale = 0, rien à dispatcher
             if ($quantiteRestante <= 0) {
                 $this->db->commit();
                 return ['success' => true, 'distribution' => [], 'message' => 'Quantité disponible = 0, rien à distribuer'];
@@ -194,10 +196,8 @@ class DistributionService {
                 $quantiteRestante -= $quantiteAttribuee;
             }
 
-            // 2️⃣ S'il reste des dons → stocker dans bngrc_stock_dons (PAS de distribution équitable)
-            if ($quantiteRestante > 0) {
-                $this->stockDonModel->ajouter($type, $designation, $quantiteRestante);
-            }
+            // 2️⃣ Mettre à jour le stock du don avec le reste
+            $this->donModel->setStock($idDon, $quantiteRestante);
 
             $this->db->commit();
 
@@ -205,7 +205,7 @@ class DistributionService {
                 'success' => true,
                 'don' => $don,
                 'distribution' => $distribution,
-                'message' => 'Distribution réussie.' . ($quantiteRestante > 0 ? ' ' . $quantiteRestante . ' stocké(s) en réserve.' : '')
+                'message' => 'Distribution réussie.' . ($quantiteRestante > 0 ? ' ' . $quantiteRestante . ' stocké(s) dans le don.' : '')
             ];
 
         } catch (\Exception $e) {
@@ -475,7 +475,7 @@ class DistributionService {
             $this->db->exec("DELETE FROM stockArgent");
 
             // Vider le stock de dons restants
-            $this->stockDonModel->viderTout();
+            $this->donModel->resetAllStock();
 
             // Remettre tous les dons en non-dispatché
             $this->db->exec("UPDATE bngrc_dons SET dispatched = 0");
@@ -619,13 +619,11 @@ class DistributionService {
             $don = $this->donModel->getById($idDon);
             $montantDon = (int)$don['montantUnitaire'];
             $designation = $don['designation'];
+            $dateAttribution = date('Y-m-d');
 
-            // 0️⃣ Utiliser le stock existant d'abord
-            $stockExistant = $this->stockDonModel->getQuantite('argent', $designation);
+            // 0️⃣ Utiliser le stock existant de CE don
+            $stockExistant = (int)$don['stock'];
             $montantRestant = $montantDon + $stockExistant;
-            if ($stockExistant > 0) {
-                $this->stockDonModel->deduire('argent', $designation, $stockExistant);
-            }
 
             $besoinsArgent = $this->obtenirBesoinsArgentNonSatisfaitsPlusPetit();
             $distribution = [];
@@ -643,6 +641,18 @@ class DistributionService {
                     [$idVille => $montantAlloue]
                 );
 
+                // Enregistrer dans stockArgent par ville
+                $this->stockArgentModel->ajouter($idVille, $montantAlloue);
+
+                // Enregistrer dans bngrc_attributions
+                $this->attributionModel->create(
+                    $idDon,
+                    $idVille,
+                    $designation,
+                    $montantAlloue,
+                    $dateAttribution
+                );
+
                 $distribution[] = [
                     'idVille' => $idVille,
                     'ville' => $besoin['ville'],
@@ -653,13 +663,11 @@ class DistributionService {
                 $montantRestant -= $montantAlloue;
             }
 
-            // Reste → stocker dans bngrc_stock_dons
-            if ($montantRestant > 0) {
-                $this->stockDonModel->ajouter('argent', $designation, $montantRestant);
-            }
+            // Mettre à jour le stock du don
+            $this->donModel->setStock($idDon, $montantRestant);
 
             $this->db->commit();
-            return ['success' => true, 'distribution' => $distribution, 'message' => 'Distribution argent (plus petit besoin) réussie.' . ($montantRestant > 0 ? ' ' . $montantRestant . ' Ar stocké(s).' : '')];
+            return ['success' => true, 'distribution' => $distribution, 'message' => 'Distribution argent (plus petit besoin) réussie.' . ($montantRestant > 0 ? ' ' . $montantRestant . ' Ar stocké(s) dans le don.' : '')];
         } catch (\Exception $e) {
             if ($this->db->inTransaction()) $this->db->rollBack();
             return ['success' => false, 'message' => 'Erreur: ' . $e->getMessage()];
@@ -679,12 +687,9 @@ class DistributionService {
             $dateAttribution = date('Y-m-d');
             $distribution = [];
 
-            // 0️⃣ Utiliser le stock existant d'abord
-            $stockExistant = $this->stockDonModel->getQuantite($type, $designation);
+            // 0️⃣ Utiliser le stock existant de CE don
+            $stockExistant = (int)$don['stock'];
             $quantiteRestante = (int)$don['quantite'] + $stockExistant;
-            if ($stockExistant > 0) {
-                $this->stockDonModel->deduire($type, $designation, $stockExistant);
-            }
 
             if ($quantiteRestante <= 0) {
                 $this->db->commit();
@@ -717,13 +722,11 @@ class DistributionService {
                 $quantiteRestante -= $quantiteAttribuee;
             }
 
-            // Reste → stocker dans bngrc_stock_dons (PAS de distribution équitable)
-            if ($quantiteRestante > 0) {
-                $this->stockDonModel->ajouter($type, $designation, $quantiteRestante);
-            }
+            // Mettre à jour le stock du don
+            $this->donModel->setStock($idDon, $quantiteRestante);
 
             $this->db->commit();
-            return ['success' => true, 'distribution' => $distribution, 'message' => 'Distribution (plus petit besoin) réussie.' . ($quantiteRestante > 0 ? ' ' . $quantiteRestante . ' stocké(s).' : '')];
+            return ['success' => true, 'distribution' => $distribution, 'message' => 'Distribution (plus petit besoin) réussie.' . ($quantiteRestante > 0 ? ' ' . $quantiteRestante . ' stocké(s) dans le don.' : '')];
         } catch (\Exception $e) {
             if ($this->db->inTransaction()) $this->db->rollBack();
             return ['success' => false, 'message' => 'Erreur: ' . $e->getMessage()];
@@ -882,17 +885,49 @@ class DistributionService {
                 return ['success' => true, 'distribution' => [], 'message' => 'Total besoins = 0, don conservé'];
             }
 
-            $totalDistribue = 0;
-
-            foreach ($besoins as $besoin) {
+            // === Méthode du plus grand reste (largest remainder) ===
+            // 1. Calcul des parts exactes et des planchers
+            $allocations = [];
+            $totalFloor = 0;
+            foreach ($besoins as $i => $besoin) {
                 $besoinQte = (int)$besoin['quantite'];
-                // Calcul proportionnel arrondi en bas
-                $quantiteAttribuee = (int)floor($quantiteDon * $besoinQte / $totalBesoins);
+                $exactShare = $quantiteDon * $besoinQte / $totalBesoins;
+                $floorVal = (int)floor($exactShare);
+                $floorVal = min($floorVal, $besoinQte); // Ne pas dépasser le besoin
+                $fractional = $exactShare - floor($exactShare);
+                $allocations[$i] = [
+                    'besoin' => $besoin,
+                    'floor' => $floorVal,
+                    'fractional' => $fractional,
+                    'maxExtra' => $besoinQte - $floorVal, // marge avant de dépasser le besoin
+                ];
+                $totalFloor += $floorVal;
+            }
 
-                // Ne pas dépasser le besoin réel
-                $quantiteAttribuee = min($quantiteAttribuee, $besoinQte);
+            // 2. Calculer le reste à distribuer
+            $reste = $quantiteDon - $totalFloor;
 
+            // 3. Trier par partie fractionnaire décroissante
+            usort($allocations, function($a, $b) {
+                return $b['fractional'] <=> $a['fractional'];
+            });
+
+            // 4. Distribuer +1 aux villes avec le plus grand reste fractionnaire
+            foreach ($allocations as &$alloc) {
+                if ($reste <= 0) break;
+                if ($alloc['maxExtra'] > 0) {
+                    $alloc['floor'] += 1;
+                    $reste--;
+                }
+            }
+            unset($alloc);
+
+            // 5. Créer les attributions
+            $totalDistribue = 0;
+            foreach ($allocations as $alloc) {
+                $quantiteAttribuee = $alloc['floor'];
                 if ($quantiteAttribuee > 0) {
+                    $besoin = $alloc['besoin'];
                     $this->attributionModel->create(
                         $idDon,
                         $besoin['idVille'],
@@ -912,17 +947,15 @@ class DistributionService {
                 }
             }
 
-            // Le reste est stocké dans bngrc_stock_dons
+            // Le reste éventuel (si besoins < don) est stocké dans le don
             $resteNonDistribue = $quantiteDon - $totalDistribue;
-            if ($resteNonDistribue > 0) {
-                $this->stockDonModel->ajouter($type, $designation, $resteNonDistribue);
-            }
+            $this->donModel->setStock($idDon, $resteNonDistribue);
 
             $this->db->commit();
             return [
                 'success' => true,
                 'distribution' => $distribution,
-                'message' => 'Distribution proportionnelle réussie. ' . $totalDistribue . ' distribué(s)' . ($resteNonDistribue > 0 ? ', ' . $resteNonDistribue . ' stocké(s) en réserve' : '')
+                'message' => 'Distribution proportionnelle réussie. ' . $totalDistribue . ' distribué(s)' . ($resteNonDistribue > 0 ? ', ' . $resteNonDistribue . ' stocké(s) dans le don' : '')
             ];
         } catch (\Exception $e) {
             if ($this->db->inTransaction()) $this->db->rollBack();
@@ -962,21 +995,64 @@ class DistributionService {
                 return ['success' => true, 'distribution' => [], 'message' => 'Total besoins argent = 0, don conservé'];
             }
 
-            $totalDistribue = 0;
-
-            foreach ($besoinsArgent as $besoin) {
+            // === Méthode du plus grand reste (largest remainder) ===
+            // 1. Calcul des parts exactes et des planchers
+            $allocations = [];
+            $totalFloor = 0;
+            foreach ($besoinsArgent as $i => $besoin) {
                 $besoinMontant = (int)$besoin['montant'];
-                // Calcul proportionnel arrondi en bas
-                $montantAlloue = (int)floor($montantDon * $besoinMontant / $totalBesoins);
+                $exactShare = $montantDon * $besoinMontant / $totalBesoins;
+                $floorVal = (int)floor($exactShare);
+                $floorVal = min($floorVal, $besoinMontant);
+                $fractional = $exactShare - floor($exactShare);
+                $allocations[$i] = [
+                    'besoin' => $besoin,
+                    'floor' => $floorVal,
+                    'fractional' => $fractional,
+                    'maxExtra' => $besoinMontant - $floorVal,
+                ];
+                $totalFloor += $floorVal;
+            }
 
-                // Ne pas dépasser le besoin réel
-                $montantAlloue = min($montantAlloue, $besoinMontant);
+            // 2. Calculer le reste à distribuer
+            $reste = $montantDon - $totalFloor;
 
+            // 3. Trier par partie fractionnaire décroissante
+            usort($allocations, function($a, $b) {
+                return $b['fractional'] <=> $a['fractional'];
+            });
+
+            // 4. Distribuer +1 aux villes avec le plus grand reste fractionnaire
+            foreach ($allocations as &$alloc) {
+                if ($reste <= 0) break;
+                if ($alloc['maxExtra'] > 0) {
+                    $alloc['floor'] += 1;
+                    $reste--;
+                }
+            }
+            unset($alloc);
+
+            // 5. Créer les attributions
+            $totalDistribue = 0;
+            foreach ($allocations as $alloc) {
+                $montantAlloue = $alloc['floor'];
                 if ($montantAlloue > 0) {
+                    $besoin = $alloc['besoin'];
+
                     $this->repartitionArgentModel->creerRepartition(
                         $besoin['idBesoin'],
                         $montantAlloue,
                         [$besoin['idVille'] => $montantAlloue]
+                    );
+
+                    $this->stockArgentModel->ajouter($besoin['idVille'], $montantAlloue);
+
+                    $this->attributionModel->create(
+                        $idDon,
+                        $besoin['idVille'],
+                        $don['designation'],
+                        $montantAlloue,
+                        date('Y-m-d')
                     );
 
                     $distribution[] = [
@@ -990,17 +1066,15 @@ class DistributionService {
                 }
             }
 
-            // Le reste est stocké dans bngrc_stock_dons
+            // Le reste éventuel est stocké dans le don
             $resteNonDistribue = $montantDon - $totalDistribue;
-            if ($resteNonDistribue > 0) {
-                $this->stockDonModel->ajouter('argent', $don['designation'], $resteNonDistribue);
-            }
+            $this->donModel->setStock($idDon, $resteNonDistribue);
 
             $this->db->commit();
             return [
                 'success' => true,
                 'distribution' => $distribution,
-                'message' => 'Distribution argent proportionnelle réussie. ' . $totalDistribue . ' Ar distribué(s)' . ($resteNonDistribue > 0 ? ', ' . $resteNonDistribue . ' Ar stocké(s) en réserve' : '')
+                'message' => 'Distribution argent proportionnelle réussie. ' . $totalDistribue . ' Ar distribué(s)' . ($resteNonDistribue > 0 ? ', ' . $resteNonDistribue . ' Ar stocké(s) dans le don' : '')
             ];
         } catch (\Exception $e) {
             if ($this->db->inTransaction()) $this->db->rollBack();
@@ -1009,27 +1083,28 @@ class DistributionService {
     }
 
     /**
-     * Distribuer les restes en stock vers les besoins non satisfaits
+     * Distribuer les restes en stock (don.stock > 0) vers les besoins non satisfaits
      * @param string $mode 'ancien' | 'plus_petit' | 'proportionnel'
      * @return array ['nbDistribue' => int]
      */
     private function distribuerDepuisStock($mode = 'ancien') {
-        $stocks = $this->stockDonModel->getAll();
+        $donsAvecStock = $this->donModel->getDonsAvecStock();
         $nbDistribue = 0;
 
-        foreach ($stocks as $stock) {
-            $type = $stock['type'];
-            $designation = $stock['designation'];
-            $quantite = (int)$stock['quantite'];
-            if ($quantite <= 0) continue;
+        foreach ($donsAvecStock as $don) {
+            $idDon = $don['id'];
+            $type = $don['type'];
+            $designation = $don['designation'];
+            $stockDispo = (int)$don['stock'];
+            if ($stockDispo <= 0) continue;
 
             try {
                 $this->db->beginTransaction();
 
-                if ($type === 'argent') {
-                    $nbDistribue += $this->distribuerStockArgent($designation, $quantite, $mode);
+                if (strtolower($type) === 'argent') {
+                    $nbDistribue += $this->distribuerStockArgent($idDon, $designation, $stockDispo, $mode);
                 } else {
-                    $nbDistribue += $this->distribuerStockClassique($type, $designation, $quantite, $mode);
+                    $nbDistribue += $this->distribuerStockClassique($idDon, $type, $designation, $stockDispo, $mode);
                 }
 
                 $this->db->commit();
@@ -1042,9 +1117,9 @@ class DistributionService {
     }
 
     /**
-     * Distribuer un stock classique (nature/materiaux) vers les besoins non satisfaits
+     * Distribuer le stock d'un don classique (nature/materiaux) vers les besoins non satisfaits
      */
-    private function distribuerStockClassique($type, $designation, $quantite, $mode) {
+    private function distribuerStockClassique($idDon, $type, $designation, $quantite, $mode) {
         if ($mode === 'plus_petit') {
             $besoins = $this->obtenirBesoinsNonSatisfaitsPlusPetit($type, $designation);
         } else {
@@ -1058,50 +1133,61 @@ class DistributionService {
         $dateAttribution = date('Y-m-d');
 
         if ($mode === 'proportionnel') {
-            // Distribution proportionnelle
             $totalBesoins = 0;
             foreach ($besoins as $b) $totalBesoins += (int)$b['quantite'];
             if ($totalBesoins <= 0) return 0;
 
+            // Largest remainder method
+            $allocations = [];
+            $totalFloor = 0;
+            foreach ($besoins as $i => $b) {
+                $besoinQte = (int)$b['quantite'];
+                $exactShare = $quantite * $besoinQte / $totalBesoins;
+                $floorVal = min((int)floor($exactShare), $besoinQte);
+                $fractional = $exactShare - floor($exactShare);
+                $allocations[$i] = ['besoin' => $b, 'floor' => $floorVal, 'fractional' => $fractional, 'maxExtra' => $besoinQte - $floorVal];
+                $totalFloor += $floorVal;
+            }
+            $resteBonus = $quantite - $totalFloor;
+            usort($allocations, fn($a, $b) => $b['fractional'] <=> $a['fractional']);
+            foreach ($allocations as &$al) {
+                if ($resteBonus <= 0) break;
+                if ($al['maxExtra'] > 0) { $al['floor']++; $resteBonus--; }
+            }
+            unset($al);
+
             $totalDistribue = 0;
-            foreach ($besoins as $besoin) {
-                $besoinQte = (int)$besoin['quantite'];
-                $qte = (int)floor($quantite * $besoinQte / $totalBesoins);
-                $qte = min($qte, $besoinQte);
+            foreach ($allocations as $al) {
+                $qte = $al['floor'];
                 if ($qte > 0) {
-                    $this->attributionModel->create(null, $besoin['idVille'], $designation, $qte, $dateAttribution);
+                    $this->attributionModel->create($idDon, $al['besoin']['idVille'], $designation, $qte, $dateAttribution);
                     $totalDistribue += $qte;
                     $nbAttrib++;
                 }
             }
             $restant = $quantite - $totalDistribue;
         } else {
-            // Distribution séquentielle (ancien ou plus_petit)
             foreach ($besoins as $besoin) {
                 if ($restant <= 0) break;
                 $qteNecessaire = (int)$besoin['quantite'];
                 $qteAttribuee = min($restant, $qteNecessaire);
 
-                $this->attributionModel->create(null, $besoin['idVille'], $designation, $qteAttribuee, $dateAttribution);
+                $this->attributionModel->create($idDon, $besoin['idVille'], $designation, $qteAttribuee, $dateAttribution);
                 $restant -= $qteAttribuee;
                 $nbAttrib++;
             }
         }
 
-        // Déduire ce qui a été distribué du stock
-        $distribue = $quantite - $restant;
-        if ($distribue > 0) {
-            $this->stockDonModel->deduire($type, $designation, $distribue);
-        }
-        // Si reste encore, il reste en stock (inchangé)
+        // Mettre à jour le stock du don
+        $this->donModel->setStock($idDon, $restant);
 
         return $nbAttrib;
     }
 
     /**
-     * Distribuer un stock argent vers les besoins argent non satisfaits
+     * Distribuer le stock d'un don argent vers les besoins argent non satisfaits
      */
-    private function distribuerStockArgent($designation, $quantite, $mode) {
+    private function distribuerStockArgent($idDon, $designation, $quantite, $mode) {
         if ($mode === 'plus_petit') {
             $besoins = $this->obtenirBesoinsArgentNonSatisfaitsPlusPetit();
         } else {
@@ -1112,31 +1198,49 @@ class DistributionService {
 
         $restant = $quantite;
         $nbAttrib = 0;
+        $dateAttribution = date('Y-m-d');
 
         if ($mode === 'proportionnel') {
-            // Distribution proportionnelle
             $totalBesoins = 0;
             foreach ($besoins as $b) $totalBesoins += (int)$b['montant'];
             if ($totalBesoins <= 0) return 0;
 
+            // Largest remainder method
+            $allocations = [];
+            $totalFloor = 0;
+            foreach ($besoins as $i => $b) {
+                $besoinMontant = (int)$b['montant'];
+                $exactShare = $quantite * $besoinMontant / $totalBesoins;
+                $floorVal = min((int)floor($exactShare), $besoinMontant);
+                $fractional = $exactShare - floor($exactShare);
+                $allocations[$i] = ['besoin' => $b, 'floor' => $floorVal, 'fractional' => $fractional, 'maxExtra' => $besoinMontant - $floorVal];
+                $totalFloor += $floorVal;
+            }
+            $resteBonus = $quantite - $totalFloor;
+            usort($allocations, fn($a, $b) => $b['fractional'] <=> $a['fractional']);
+            foreach ($allocations as &$al) {
+                if ($resteBonus <= 0) break;
+                if ($al['maxExtra'] > 0) { $al['floor']++; $resteBonus--; }
+            }
+            unset($al);
+
             $totalDistribue = 0;
-            foreach ($besoins as $besoin) {
-                $besoinMontant = (int)$besoin['montant'];
-                $montant = (int)floor($quantite * $besoinMontant / $totalBesoins);
-                $montant = min($montant, $besoinMontant);
+            foreach ($allocations as $al) {
+                $montant = $al['floor'];
                 if ($montant > 0) {
                     $this->repartitionArgentModel->creerRepartition(
-                        $besoin['idBesoin'],
+                        $al['besoin']['idBesoin'],
                         $montant,
-                        [$besoin['idVille'] => $montant]
+                        [$al['besoin']['idVille'] => $montant]
                     );
+                    $this->stockArgentModel->ajouter($al['besoin']['idVille'], $montant);
+                    $this->attributionModel->create($idDon, $al['besoin']['idVille'], $designation, $montant, $dateAttribution);
                     $totalDistribue += $montant;
                     $nbAttrib++;
                 }
             }
             $restant = $quantite - $totalDistribue;
         } else {
-            // Distribution séquentielle (ancien ou plus_petit)
             foreach ($besoins as $besoin) {
                 if ($restant <= 0) break;
                 $montantNecessaire = (int)$besoin['montant'];
@@ -1147,16 +1251,15 @@ class DistributionService {
                     $montantAlloue,
                     [$besoin['idVille'] => $montantAlloue]
                 );
+                $this->stockArgentModel->ajouter($besoin['idVille'], $montantAlloue);
+                $this->attributionModel->create($idDon, $besoin['idVille'], $designation, $montantAlloue, $dateAttribution);
                 $restant -= $montantAlloue;
                 $nbAttrib++;
             }
         }
 
-        // Déduire ce qui a été distribué du stock
-        $distribue = $quantite - $restant;
-        if ($distribue > 0) {
-            $this->stockDonModel->deduire('argent', $designation, $distribue);
-        }
+        // Mettre à jour le stock du don
+        $this->donModel->setStock($idDon, $restant);
 
         return $nbAttrib;
     }
