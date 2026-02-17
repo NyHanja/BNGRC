@@ -37,7 +37,7 @@
             </button>
         </form>
         <form method="POST" action="dons/annuler-tous-dispatches" style="display:inline;">
-            <button type="submit" class="btn btn-danger" onclick="return confirm('Annuler tous les dispatches ?');">
+            <button type="submit" class="btn btn-danger">
                 ↩️ Annuler tous
             </button>
         </form>
@@ -89,7 +89,7 @@
                     <a href="dons/<?php echo $don['id']; ?>/rapport" class="btn btn-sm btn-info" title="Rapport">📊</a>
                     <a href="dons/<?php echo $don['id']; ?>/edit" class="btn btn-sm btn-warning" title="Éditer">✏️</a>
                     <form method="POST" action="dons/<?php echo $don['id']; ?>/delete" style="display:inline;">
-                        <button type="submit" class="btn btn-sm btn-danger" title="Supprimer" onclick="return confirm('Supprimer ce don ?');">🗑️</button>
+                        <button type="submit" class="btn btn-sm btn-danger" title="Supprimer">🗑️</button>
                     </form>
                 </td>
             </tr>
