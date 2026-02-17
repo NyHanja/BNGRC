@@ -493,9 +493,11 @@ class LayoutController {
         $montantNet = $montantBrut + $frais;
 
         // Vérifier le stockArgent de la ville du besoin
-        $idVille = $besoinCible['idVille'];
+        $idVille = $this->besoinModel->getVilleId($besoinId)['idVille'];
+        $nom = $this->villeModel->getById($idVille)['nom'];
         $stock = $this->stockArgentModel->getByVille($idVille);
-        $stockDisponible = $stock ? (int)$stock['quantite'] : 0;
+
+        $stockDisponible = $stock ? (int)$stock['quantite'] : $idVille;
         $stockSuffisant = $stockDisponible >= $montantNet;
         $sourceFinancement = 'stockArgent';
 
@@ -520,7 +522,7 @@ class LayoutController {
                 'sourceFinancement' => $sourceFinancement,
                 'stockDisponible' => $stockDisponible,
                 'stockSuffisant' => $stockSuffisant,
-                'villeNom' => $besoinCible['nomVille']
+                'villeNom' => $nom
             ]
         ]);
     }
@@ -551,7 +553,7 @@ class LayoutController {
                 throw new \Exception('Besoin non trouvé');
             }
             
-            $villeId = $besoincible['idVille'];
+            $villeId = $this->besoinModel->getVilleId($besoinId)['idVille'];
             if (!$villeId) {
                 throw new \Exception('Ville non spécifiée');
             }

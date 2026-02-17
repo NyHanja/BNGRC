@@ -30,6 +30,12 @@ class BesoinModel {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    public function getVilleId($id) {
+        $stmt = $this->db->prepare("SELECT * FROM bngrc_besoins WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     /**
      * Récupérer les besoins par ville
      */
