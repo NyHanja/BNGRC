@@ -3,6 +3,7 @@
 -- Créé pour Harena, Nekena et NyHanja
 -- --------------------------------------------------
 
+DROP DATABASE IF EXISTS bngrc;
 -- 1️⃣ Création de la base de données
 CREATE DATABASE IF NOT EXISTS bngrc;
 USE bngrc;
@@ -15,7 +16,7 @@ CREATE TABLE IF NOT EXISTS bngrc_villes (
 );
 
 -- Données exemples pour villes
-INSERT INTO villes (nom, region) VALUES
+INSERT INTO bngrc_villes (nom, region) VALUES
 ('Antananarivo', 'Analamanga'),
 ('Toamasina', 'Atsinanana'),
 ('Fianarantsoa', 'Haute Matsiatra');
@@ -29,11 +30,11 @@ CREATE TABLE IF NOT EXISTS bngrc_besoins (
     prixUnitaire DECIMAL(10,2) NOT NULL,
     quantite INT NOT NULL,
     dateSaisie DATE NOT NULL,
-    FOREIGN KEY (idVille) REFERENCES villes(id) ON DELETE CASCADE
+    FOREIGN KEY (idVille) REFERENCES bngrc_villes(id) ON DELETE CASCADE
 );
 
 -- Données exemples pour besoins
-INSERT INTO besoins (idVille, type, designation, prixUnitaire, quantite, dateSaisie) VALUES
+INSERT INTO bngrc_besoins (idVille, type, designation, prixUnitaire, quantite, dateSaisie) VALUES
 (1, 'nature', 'riz', 2.50, 1000, '2026-02-15'),
 (1, 'materiaux', 'tôle', 10.00, 200, '2026-02-15'),
 (2, 'argent', 'fonds secours', 1.00, 5000, '2026-02-14'),
@@ -50,11 +51,7 @@ CREATE TABLE IF NOT EXISTS bngrc_dons (
     dateSaisie DATE NOT NULL
 );
 
--- Données exemples pour dons
-INSERT INTO dons (donateur, type, designation, montantUnitaire, quantite, dateSaisie) VALUES
-('BNGRC', 'nature', 'riz', 2.50, 500, '2026-02-15'),
-('Association A', 'materiaux', 'tôle', 10.00, 100, '2026-02-14'),
-('Donateur Privé', 'argent', 'fonds secours', 1.00, 2000, '2026-02-13');
+
 
 -- 5️⃣ Table attributions
 CREATE TABLE IF NOT EXISTS bngrc_attributions (
@@ -64,12 +61,9 @@ CREATE TABLE IF NOT EXISTS bngrc_attributions (
     designation VARCHAR(100) NOT NULL,
     quantiteAttribuee INT NOT NULL,
     dateAttribution DATE NOT NULL,
-    FOREIGN KEY (idDons) REFERENCES dons(id) ON DELETE CASCADE,
-    FOREIGN KEY (idVille) REFERENCES villes(id) ON DELETE CASCADE
+    FOREIGN KEY (idDons) REFERENCES bngrc_dons(id) ON DELETE CASCADE,
+    FOREIGN KEY (idVille) REFERENCES bngrc_villes(id) ON DELETE CASCADE
 );
 
--- Données exemples pour attributions
-INSERT INTO attributions (idDons, idVille, designation, quantiteAttribuee, dateAttribution) VALUES
-(1, 1, 'riz', 300, '2026-02-16'),
-(2, 1, 'tôle', 50, '2026-02-16'),
-(3, 2, 'fonds secours', 1000, '2026-02-16');
+
+

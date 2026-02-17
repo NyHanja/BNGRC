@@ -57,7 +57,7 @@ $app->set('flight.content_length', false);    // Send content length header. Usu
 // Generate a CSP nonce for each request and store in $app
 $nonce = bin2hex(random_bytes(16));
 $app->set('csp_nonce', $nonce);
-
+// M8vxGBGk
 /**********************************************
  *           User Configuration               *
  **********************************************/
@@ -67,8 +67,8 @@ return [
 	 **************************************/
 	'database' => [
 		// MySQL Example:
-		'host'     => 'localhost', 
-		'dbname'   => 'flight',
+		'host'     => '127.0.0.1', 
+		'dbname'   => 'bngrc',
 		'user'     => 'root',  
 		'password' => '',
 

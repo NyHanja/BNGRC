@@ -28,8 +28,7 @@
         
         public function getById($id) {
             $stmt = $this->db->prepare("SELECT * FROM produit WHERE id = :id");
-            $stmt->bindParam(':id', $id);
-            $stmt->execute();
+            $stmt->execute([':id' => $id]);
             
             $produit = [];
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
