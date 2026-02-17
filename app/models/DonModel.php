@@ -87,5 +87,31 @@ class DonModel {
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['total'];
     }
+
+    /**
+     * Marquer un don comme dispatché
+     */
+    public function markDispatched($id) {
+        $stmt = $this->db->prepare("UPDATE bngrc_dons SET dispatched = 1 WHERE id = :id");
+        return $stmt->execute([':id' => $id]);
+    }
+
+    /**
+     * Marquer un don comme non-dispatché (annulation)
+     */
+    public function markUndispatched($id) {
+        $stmt = $this->db->prepare("UPDATE bngrc_dons SET dispatched = 0 WHERE id = :id");
+        return $stmt->execute([':id' => $id]);
+    }
+
+    /**
+     * Vérifier si un don est déjà dispatché
+     */
+    public function isDispatched($id) {
+        $stmt = $this->db->prepare("SELECT dispatched FROM bngrc_dons WHERE id = :id");
+        $stmt->execute([':id' => $id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result && $result['dispatched'] == 1;
+    }
 }
 ?>

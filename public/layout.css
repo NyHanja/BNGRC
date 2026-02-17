@@ -452,6 +452,31 @@ body {
     color: #d35400;
 }
 
+.badge-dispatched {
+    background-color: #d5f4e6;
+    color: #27ae60;
+}
+
+.badge-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+/* ========================================
+   DISPATCH ACTIONS BAR
+   ======================================== */
+
+.dispatch-actions {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
 /* ========================================
    DASHBOARD
    ======================================== */

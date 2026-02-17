@@ -32,7 +32,7 @@
             <?php foreach($attributions as $attribution): ?>
             <tr>
                 <td><?php echo $attribution['id']; ?></td>
-                <td><?php echo htmlspecialchars($attribution['donateur'] ?? 'N/A'); ?></td>
+                <td><?php echo htmlspecialchars($attribution['donateur'] ?? 'Stock (réserve)'); ?></td>
                 <td><?php echo htmlspecialchars($attribution['ville'] ?? 'N/A'); ?></td>
                 <td><?php echo htmlspecialchars($attribution['designation']); ?></td>
                 <td><?php echo $attribution['quantiteAttribuee']; ?></td>
