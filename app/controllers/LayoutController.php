@@ -563,9 +563,9 @@ class LayoutController {
                 $this->stockArgentModel->deduire($villeId, $montantNet);
             }
             
-            // Créer l'attribution
+            // Créer l'attribution (pas de don associé → idDons = NULL)
             $this->attributionModel->create(
-                $besoincible['idBesoin'],
+                null,
                 $villeId,
                 $besoincible['designationBesoin'],
                 $quantiteAAttribuer,
